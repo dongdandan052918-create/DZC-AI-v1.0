@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -20,6 +21,24 @@
                 blue: '#3B82F6'
               },
             },
+            animation: {
+              'spin-slow': 'spin 4s linear infinite',
+              'brutalist-pulse': 'brutalist-pulse 1.5s ease-in-out infinite',
+            },
+            keyframes: {
+              'brutalist-pulse': {
+                '0%, 100%': { 
+                  transform: 'scale(1)',
+                  boxShadow: '3px 3px 0px 0px rgba(0,0,0,1)',
+                  backgroundColor: '#ffffff'
+                },
+                '50%': { 
+                  transform: 'scale(1.1)',
+                  boxShadow: '0px 0px 20px 8px rgba(229, 49, 47, 0.4), 3px 3px 0px 0px rgba(0,0,0,1)',
+                  backgroundColor: '#fff1f2'
+                },
+              }
+            }
           }
         }
       }
@@ -31,7 +50,7 @@
         background-color: #F8FAFC;
         background-image: radial-gradient(#CBD5E1 1px, transparent 1px);
         background-size: 24px 24px;
-        font-family: 'Arial', sans-serif;
+        font-family: 'Microsoft YaHei', '微软雅黑', 'Arial', sans-serif;
       }
 
       .brutalist-border {
