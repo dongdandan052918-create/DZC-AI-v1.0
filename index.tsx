@@ -7,7 +7,7 @@ import {
   RefreshCw, Edit, Maximize2, Headset, Check,
   Square, CheckSquare, Link as LinkIcon, Megaphone, ExternalLink, Lock,
   History, Copy, ClipboardCheck, Trash2,
-  AlertTriangle, AlignLeft
+  AlertTriangle
 } from 'lucide-react';
 
 // --- Types & Declarations ---
