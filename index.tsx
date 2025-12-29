@@ -7,7 +7,8 @@ import {
   RefreshCw, Edit, Maximize2, Headset, Check,
   Square, CheckSquare, Link as LinkIcon, Megaphone, ExternalLink, Lock,
   History, Copy, ClipboardCheck, Trash2,
-  AlertTriangle, Palette, Bookmark, Wand2, GripVertical, Save
+  AlertTriangle, Palette, Bookmark, Wand2, GripVertical, Save,
+  Image as ImageIcon, Film
 } from 'lucide-react';
 
 // --- Types & Declarations ---
@@ -1136,9 +1137,24 @@ const App = () => {
         <div className="flex-1 overflow-y-auto p-5 space-y-6 no-scrollbar">
           <section className="space-y-3">
             <SectionLabel text="1.创作类型 / Creation Type" />
-            <div className="flex gap-3">
-              <button onClick={() => setMainCategory('image')} className={`flex-1 py-2.5 border-2 border-black font-normal uppercase transition-all text-sm ${mainCategory === 'image' ? 'bg-brand-yellow brutalist-shadow-sm translate-y-[-2px]' : 'bg-white'}`}>图片创作</button>
-              <button onClick={() => setMainCategory('video')} className={`flex-1 py-2.5 border-2 border-black font-normal uppercase transition-all text-sm ${mainCategory === 'video' ? 'bg-brand-red text-white brutalist-shadow-sm translate-y-[-2px]' : 'bg-white'}`}>视频制作</button>
+            <div className="grid grid-cols-2 gap-4">
+              <button 
+                onClick={() => setMainCategory('image')} 
+                className={`relative h-24 flex flex-col items-center justify-center border-2 border-black transition-all duration-300 group overflow-hidden ${mainCategory === 'image' ? 'bg-brand-yellow brutalist-shadow -translate-y-1' : 'bg-white hover:bg-brand-yellow/20'}`}
+              >
+                <div className={`absolute top-0 right-0 p-1 bg-black text-white text-[10px] font-bold uppercase ${mainCategory === 'image' ? 'block' : 'hidden'}`}>Selected</div>
+                <ImageIcon className={`w-8 h-8 mb-1 ${mainCategory === 'image' ? 'text-black scale-110' : 'text-slate-400 group-hover:text-black group-hover:scale-110'} transition-transform duration-300`} strokeWidth={2.5} />
+                <span className={`text-xl font-black uppercase italic tracking-tighter ${mainCategory === 'image' ? 'text-black' : 'text-slate-500 group-hover:text-black'}`}>图片创作</span>
+              </button>
+
+              <button 
+                onClick={() => setMainCategory('video')} 
+                className={`relative h-24 flex flex-col items-center justify-center border-2 border-black transition-all duration-300 group overflow-hidden ${mainCategory === 'video' ? 'bg-brand-red brutalist-shadow -translate-y-1' : 'bg-white hover:bg-brand-red/10'}`}
+              >
+                <div className={`absolute top-0 right-0 p-1 bg-black text-white text-[10px] font-bold uppercase ${mainCategory === 'video' ? 'block' : 'hidden'}`}>Selected</div>
+                <Film className={`w-8 h-8 mb-1 ${mainCategory === 'video' ? 'text-white scale-110' : 'text-slate-400 group-hover:text-brand-red group-hover:scale-110'} transition-transform duration-300`} strokeWidth={2.5} />
+                <span className={`text-xl font-black uppercase italic tracking-tighter ${mainCategory === 'video' ? 'text-white' : 'text-slate-500 group-hover:text-brand-red'}`}>视频制作</span>
+              </button>
             </div>
             
             <div className={`p-3 bg-brand-cream border-2 border-black brutalist-shadow-sm ${referenceImages.length > 0 ? 'solid-box-green' : 'solid-box-purple'}`}>
