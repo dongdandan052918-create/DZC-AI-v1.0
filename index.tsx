@@ -10,7 +10,7 @@ import {
   AlertTriangle, Palette, Bookmark, Wand2, GripVertical, Save,
   Image as ImageIcon, Film, Folder, Tag, LayoutGrid, ChevronDown,
   BookOpen, Headset, Shield,
-  Paperclip, Send, MessageSquare, FileText, Music, Mic
+  Paperclip, Send, FileText, Music
 } from 'lucide-react';
 
 // --- Types & Declarations ---
@@ -761,7 +761,6 @@ const App = () => {
   const [config, setConfig] = useState<AppConfig>({ baseUrl: FIXED_BASE_URL, apiKey: '' });
   const [tempConfig, setTempConfig] = useState<AppConfig>(config);
   const [prompt, setPrompt] = useState('');
-  const [proxyText, setProxyText] = useState('');
   const [libraryPrompts, setLibraryPrompts] = useState<SavedPrompt[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [referenceImages, setReferenceImages] = useState<ReferenceImage[]>([]);
@@ -2649,6 +2648,129 @@ const App = () => {
              </div>
            </div>
          </div>
+      )}
+
+      {activeModal === 'library' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+            <div className="w-[900px] max-w-full bg-white border-4 border-black brutalist-shadow animate-in zoom-in-95 relative flex flex-col max-h-[90vh]">
+                <ModalHeader title="提示词库 / PROMPT LIBRARY" icon={BookOpen} onClose={() => setActiveModal(null)} bgColor="bg-brand-purple text-white" />
+                <div className="flex flex-1 min-h-0">
+                    {/* Sidebar: Categories */}
+                    <div className="w-64 border-r-4 border-black bg-brand-cream p-4 flex flex-col gap-3 overflow-y-auto">
+                        {/* Add Category */}
+                        {!isAddingCategory ? (
+                            <button onClick={handleStartAddCategory} className="w-full py-2 border-2 border-black border-dashed bg-white hover:bg-brand-green hover:text-white transition-colors text-sm font-bold uppercase flex items-center justify-center gap-2">
+                                <Plus className="w-4 h-4"/> 新建分类
+                            </button>
+                        ) : (
+                            <div className="flex gap-1">
+                                <input value={newCategoryName} onChange={e => setNewCategoryName(e.target.value)} className="w-full p-1 border-2 border-black text-sm" placeholder="Name..." autoFocus />
+                                <button onClick={handleSaveNewCategory} className="bg-brand-green text-black border-2 border-black p-1"><Check className="w-4 h-4"/></button>
+                            </div>
+                        )}
+                        
+                        {/* Category List */}
+                        {categories.map(cat => (
+                            <div key={cat} onClick={() => setSelectedCategory(cat)} className={`p-2 border-2 border-black cursor-pointer flex justify-between items-center group ${selectedCategory === cat ? 'bg-brand-yellow brutalist-shadow-sm' : 'bg-white hover:bg-slate-100'}`}>
+                                {renamingCat === cat ? (
+                                     <input 
+                                        value={renameInput} 
+                                        onChange={e => setRenameInput(e.target.value)} 
+                                        onBlur={handleFinishRenameCat}
+                                        onKeyDown={e => e.key === 'Enter' && handleFinishRenameCat()}
+                                        className="w-full p-0 bg-transparent border-b border-black text-sm font-bold focus:outline-none"
+                                        autoFocus
+                                        onClick={e => e.stopPropagation()}
+                                     />
+                                ) : (
+                                    <>
+                                        <div className="flex items-center gap-2">
+                                            {cat === '全部' ? <LayoutGrid className="w-3.5 h-3.5"/> : <Folder className="w-3.5 h-3.5"/>}
+                                            <span className="font-bold text-sm truncate">{cat}</span>
+                                        </div>
+                                        <div className="hidden group-hover:flex gap-1">
+                                            <button onClick={(e) => { e.stopPropagation(); handleStartRenameCat(cat); }} className="p-0.5 hover:text-blue-600"><Edit className="w-3 h-3"/></button>
+                                            <button onClick={(e) => handleDeleteCategory(cat, e)} className="p-0.5 hover:text-red-600"><Trash2 className="w-3 h-3"/></button>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Main: Prompts List */}
+                    <div className="flex-1 p-4 overflow-y-auto bg-slate-50 space-y-3">
+                         {libraryPrompts.filter(p => selectedCategory === '全部' || p.category === selectedCategory).map((p, idx) => (
+                            <div 
+                                key={p.id}
+                                draggable={selectedCategory === '全部' && !editingLibraryId}
+                                onDragStart={() => handleDragStart(idx)}
+                                onDragOver={(e) => handleDragOver(e, idx)}
+                                onDragEnd={handleDragEnd}
+                                className="bg-white border-2 border-black p-3 brutalist-shadow-sm group hover:-translate-y-0.5 transition-transform"
+                            >
+                                {editingLibraryId === p.id ? (
+                                    <div className="space-y-2">
+                                        <div className="flex gap-2">
+                                            <input value={editingLibraryName} onChange={e => setEditingLibraryName(e.target.value)} className="flex-1 border-2 border-black p-1 text-sm font-bold" placeholder="Name" />
+                                            <select value={editingLibraryCategory} onChange={e => setEditingLibraryCategory(e.target.value)} className="border-2 border-black p-1 text-sm">
+                                                {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                                            </select>
+                                        </div>
+                                        <textarea value={editingLibraryText} onChange={e => setEditingLibraryText(e.target.value)} className="w-full border-2 border-black p-2 text-sm h-20 resize-none" />
+                                        <div className="flex gap-2 justify-end">
+                                            <button onClick={(e) => handleCancelLibraryEdit(e)} className="px-3 py-1 bg-slate-200 border-2 border-black text-xs font-bold">Cancel</button>
+                                            <button onClick={(e) => handleSaveLibraryEdit(p.id, e)} className="px-3 py-1 bg-brand-green border-2 border-black text-xs font-bold">Save</button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="flex gap-3 items-start">
+                                        {selectedCategory === '全部' && (
+                                            <div className="cursor-move text-slate-400 hover:text-black self-center"><GripVertical className="w-4 h-4"/></div>
+                                        )}
+                                        <div className="flex-1 min-w-0 cursor-pointer" onClick={() => usePromptFromLibrary(p.text)}>
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <span className="font-black text-sm uppercase">{p.name}</span>
+                                                <span className="text-[10px] bg-slate-100 border border-black px-1 flex items-center gap-1 text-slate-500"><Tag className="w-2.5 h-2.5"/> {p.category}</span>
+                                            </div>
+                                            <p className="text-xs text-slate-600 line-clamp-2 italic">"{p.text}"</p>
+                                        </div>
+                                        <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button onClick={(e) => usePromptFromLibrary(p.text)} className="p-1 bg-brand-yellow border-2 border-black hover:scale-110"><Check className="w-3 h-3"/></button>
+                                            <button onClick={(e) => handleStartLibraryEdit(p, e)} className="p-1 bg-white border-2 border-black hover:scale-110"><Edit className="w-3 h-3"/></button>
+                                            <button onClick={(e) => removePromptFromLibrary(p.id, e)} className="p-1 bg-brand-red text-white border-2 border-black hover:scale-110"><Trash2 className="w-3 h-3"/></button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                         ))}
+                         {libraryPrompts.length === 0 && <div className="text-center text-slate-400 italic mt-10">暂无提示词 / No Prompts</div>}
+                    </div>
+                </div>
+            </div>
+        </div>
+      )}
+
+      {activeModal === 'video-remix' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+            <div className="w-[500px] bg-white border-4 border-black brutalist-shadow animate-in zoom-in-95 relative">
+                <ModalHeader title="视频重绘 / VIDEO REMIX" icon={Film} onClose={() => setActiveModal(null)} />
+                <div className="p-6 space-y-4">
+                    <div className="bg-slate-100 p-3 border-2 border-black text-xs text-slate-500 italic">
+                        基于原视频: <span className="font-bold text-black">{remixingAsset?.id.slice(0,8)}...</span>
+                    </div>
+                    <textarea 
+                        value={remixPrompt}
+                        onChange={(e) => setRemixPrompt(e.target.value)}
+                        className="w-full h-32 p-3 border-2 border-black focus:outline-none focus:bg-brand-cream resize-none text-sm"
+                        placeholder="输入新的提示词进行重绘..."
+                    />
+                    <button onClick={executeVideoRemix} className="w-full py-3 bg-brand-red text-white border-2 border-black font-bold uppercase hover:shadow-none hover:translate-y-0.5 brutalist-shadow-sm transition-all">
+                        开始重绘 / START REMIX
+                    </button>
+                </div>
+            </div>
+        </div>
       )}
 
       {previewAsset && (
