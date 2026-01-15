@@ -10,7 +10,7 @@ import {
   AlertTriangle, Palette, Bookmark, Wand2, GripVertical, Save,
   Image as ImageIcon, Film, BookOpen, Headset, Shield,
   Paperclip, Send, FileText, Music, Rocket, Mic, Volume2,
-  User, VolumeX, Sliders, AudioLines, Users
+  User, VolumeX, AudioLines
 } from 'lucide-react';
 
 // --- Types & Declarations ---
