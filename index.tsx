@@ -3081,7 +3081,21 @@ const App = () => {
                                             </button>
                                             </div>
                                         ))}
-                                        {((!isVideoMode ? referenceImages.length < (currentImageModel?.maxImages || 4) : referenceImages.length < (selectedVideoModel === 'kling-avatar-image2video' || selectedVideoModel === 'kling-motion-control' ? 1 : (selectedVideoModel === 'veo_3_1-fast-components-4K' ? 3 : (selectedVideoModel.startsWith('veo') || selectedVideoModel.startsWith('grok')) ? 2 : 1)))) && (
+                                        {(() => {
+                                           let maxRefs = 4;
+                                           if (!isVideoMode) {
+                                               maxRefs = currentImageModel?.maxImages || 4;
+                                           } else {
+                                               if (selectedVideoModel === 'kling-avatar-image2video' || selectedVideoModel === 'kling-motion-control') {
+                                                   maxRefs = 1;
+                                               } else if (selectedVideoModel === 'veo_3_1-fast-components-4K') {
+                                                   maxRefs = 3;
+                                               } else {
+                                                   maxRefs = (selectedVideoModel.startsWith('veo') || selectedVideoModel.startsWith('grok')) ? 2 : 1;
+                                               }
+                                           }
+                                           return referenceImages.length < maxRefs;
+                                        })() && (
                                             <label className="w-24 h-24 border border-black flex items-center justify-center cursor-pointer bg-white brutalist-shadow-sm">
                                             <Plus className="w-6 h-6" /><input type="file" multiple={!isVideoMode} accept=".jpg, .jpeg, .png" className="hidden" onChange={handleImageUpload} />
                                             </label>
@@ -3150,7 +3164,6 @@ const App = () => {
                     })()
                 } : undefined}
             />
-            {/* ... (Existing logic for displaying options based on mode, kept identical) ... */}
             
                 {/* ... (The main generation configuration form) ... */}
                 <div className="p-3 bg-brand-cream border border-black brutalist-shadow-sm space-y-4">
