@@ -4,12 +4,12 @@ import {
   Settings2, Sparkles, Video, 
   Loader2, Download,
   Bot, X, AlertCircle, Plus,
-  RefreshCw, Edit, Maximize2, Minimize2, Check,
+  RefreshCw, Edit, Maximize2, Check,
   Square, CheckSquare, Megaphone, ExternalLink,
   History, Copy, ClipboardCheck, Trash2,
   AlertTriangle, Palette, Bookmark, Wand2, GripVertical, Save,
-  Image as ImageIcon, Film, BookOpen, Headset, Shield,
-  Paperclip, Send, FileText, Music, Rocket, Mic, Volume2,
+  Image as ImageIcon, BookOpen, Headset, Shield,
+  Paperclip, FileText, Music, Mic, Volume2,
   User, VolumeX, AudioLines, MessageSquare,
   ChevronLeft, ChevronRight, MessageSquarePlus, Zap, Eraser, ArrowUp,
   ChevronDown, Brush, Brain
@@ -90,7 +90,6 @@ interface ChatMessage {
 // --- Constants ---
 
 const FIXED_BASE_URL = 'https://www.vivaapi.cn';
-const UPLOAD_PROXY_URL = "https://file.io";
 const INITIAL_CHAT_MESSAGE_TEXT = '我可以帮你解答问题、分析文档或处理多媒体内容。支持上传: 文本, 图片, 音频, 视频, PDF以及更多格式。';
 
 const ASPECT_RATIO_LABELS: Record<string, string> = {
@@ -119,7 +118,6 @@ const GPT1_RATIOS = ['1:1', '2:3', '3:2'];
 const GPT15_RATIOS = ['1:1', '2:3', '3:2'];
 const GROK_RATIOS = ['1:1', '3:4', '4:3', '9:16', '16:9'];
 const KLING_O1_RATIOS = ['1:1', '2:3', '3:2', '3:4', '4:3', '9:16', '16:9', '21:9'];
-const JIMENG_RATIOS = ['1:1', '3:4', '4:3', '9:16', '16:9', '21:9'];
 
 const MODELS: ModelDefinition[] = [
   { 
@@ -444,21 +442,6 @@ const findImageUrlInObject = (obj: any): string | null => {
     }
   }
   return null;
-};
-
-const uploadFileToProxy = async (file: File): Promise<string> => {
-    try {
-        const formData = new FormData();
-        formData.append('file', file);
-        // Using file.io as a reliable temporary storage
-        const res = await fetch('https://file.io', { method: 'POST', body: formData });
-        if (!res.ok) throw new Error('Upload failed');
-        const json = await res.json();
-        return json.link || '';
-    } catch(e) {
-        console.error("Proxy upload error", e);
-        return "";
-    }
 };
 
 // --- IndexedDB ---
@@ -980,18 +963,6 @@ const SectionLabel = ({ text, link }: { text: string, link?: { href: string, tex
       </a>
     )}
   </div>
-);
-
-interface CircularButtonProps {
-  children?: React.ReactNode;
-  onClick: () => void;
-  className?: string;
-}
-
-const CircularButton = ({ children, onClick, className = "" }: CircularButtonProps) => (
-  <button onClick={onClick} className={`w-12 h-12 rounded-full border border-black flex items-center justify-center brutalist-shadow-sm transition-all hover:translate-y-0.5 hover:shadow-none ${className}`}>
-      {children}
-  </button>
 );
 
 const ModalHeader = ({ title, icon: Icon, onClose, bgColor = "bg-brand-yellow" }: { title: string, icon: any, onClose: () => void, bgColor?: string }) => (
@@ -1933,7 +1904,7 @@ const App = () => {
     const tVoice = overrideConfig?.selectedVoice ?? selectedVoice;
     const tAudioMode = overrideConfig?.audioGenMode ?? audioGenMode;
     const tSpeakerMap = overrideConfig?.speakerMap ?? speakerMap;
-    const tRefAudio = overrideConfig?.referenceAudio ?? referenceAudio;
+    // Removed unused tRefAudio declaration
 
     if (!tPrompt) { setError("请输入文本"); return; }
     
