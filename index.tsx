@@ -12,7 +12,7 @@ import {
   Paperclip, FileText, Music, Mic, Volume2,
   User, VolumeX, AudioLines, MessageSquare,
   ChevronLeft, ChevronRight, MessageSquarePlus, Zap, Eraser, ArrowUp,
-  ChevronDown, Brush, Brain, Monitor, ArrowDown
+  ChevronDown, Brush, Brain, Monitor, ArrowDown, FolderOpen, Globe
 } from 'lucide-react';
 
 // --- Types & Declarations ---
@@ -25,7 +25,7 @@ declare var process: {
 };
 
 type ModalType = 'settings' | 'links' | 'usage' | 'price' | 'support' | 'edit-prompt' | 'styles' | 'library' | 'save-prompt-confirm' | 'video-remix' | 'announcement' | null;
-type MainCategory = 'image' | 'video' | 'proxy' | 'audio' | 'chat' | 'announcement';
+type MainCategory = 'image' | 'video' | 'proxy' | 'audio' | 'chat' | 'announcement' | 'resources';
 
 interface AppConfig {
   baseUrl: string;
@@ -1143,6 +1143,13 @@ const App = () => {
   const [remixingAsset, setRemixingAsset] = useState<GeneratedAsset | null>(null);
   const [remixPrompt, setRemixPrompt] = useState('');
   
+  const [resourceItems, setResourceItems] = useState([
+    { id: 'tts', name: '文字转语音', desc: '免费TTS，多语言支持，无限次生成。', url: 'https://ttsmaker.cn/', icon: 'Mic' },
+    { id: 'img-conv', name: '图片格式转换', desc: '支持JPG, PNG, BMP, WEBP等多种格式互转。', url: 'https://www.xunjietupian.com/', icon: 'ImageIcon' },
+    { id: 'uu-remote', name: '网易UU远程', desc: '网易出品，免费高清流畅的远程控制软件。', url: 'https://uuyc.163.com', icon: 'Monitor' }
+  ]);
+  const [draggedResourceIdx, setDraggedResourceIdx] = useState<number | null>(null);
+
   const galleryRef = useRef<HTMLDivElement>(null);
   const configRef = useRef(config);
 
@@ -1153,9 +1160,10 @@ const App = () => {
   const isAudioMode = mainCategory === 'audio';
   const isChatMode = mainCategory === 'chat';
   const isAnnouncementMode = mainCategory === 'announcement';
+  const isResourcesMode = mainCategory === 'resources';
   
   // Determine if we should show the full-width view (like Chat, Proxy, Announcement)
-  const isFullWidthMode = isChatMode || isProxyMode || isAnnouncementMode;
+  const isFullWidthMode = isChatMode || isProxyMode || isAnnouncementMode || isResourcesMode;
 
   const handleSaveShortcut = () => {
     const shortcut = `[InternetShortcut]
@@ -1217,7 +1225,7 @@ URL=${window.location.href}
 
   // ... (useEffects for models remain same) ...
   useEffect(() => {
-    if (!isVideoMode && !isProxyMode && !isAudioMode && !isChatMode && !isAnnouncementMode) {
+    if (!isVideoMode && !isProxyMode && !isAudioMode && !isChatMode && !isAnnouncementMode && !isResourcesMode) {
       const model = MODELS.find(m => m.id === selectedModel);
       if (model) {
         if (!model.supportedAspectRatios.includes(aspectRatio)) setAspectRatio(model.supportedAspectRatios[0]);
@@ -1248,7 +1256,7 @@ URL=${window.location.href}
           } else if (selectedVideoModel === 'veo_3_1-fast-components-4K') {
               max = 3;
           } else {
-              max = (selectedVideoModel.startsWith('veo') || selectedVideoModel.startsWith('grok')) ? 2 : 1;
+              max = selectedVideoModel.startsWith('veo') ? 2 : 1;
           }
       }
 
@@ -1356,7 +1364,14 @@ URL=${window.location.href}
     setError(null);
   };
   
-  // ... (Polling functions startKlingImagePolling, startKlingVideoPolling, startVideoPolling same)
+  const updateAssetStatus = async (id: string, status: 'completed' | 'failed', label: string, url?: string) => {
+      setGeneratedAssets(prev => prev.map(a => a.id === id ? { ...a, status, label: label, ...(url ? { url } : {}) } : a));
+      const assets = await getAllAssetsFromDB();
+      const existing = assets.find(a => a.id === id);
+      if (existing) {
+          saveAssetToDB({ ...existing, status, genTimeLabel: label, ...(url ? { url } : {}) });
+      }
+  };
 
   const startKlingImagePolling = (taskId: string, assetId: string, startTime: number) => {
     const interval = setInterval(async () => {
@@ -1365,7 +1380,22 @@ URL=${window.location.href}
         try {
             const url = `${configRef.current.baseUrl}/kling/v1/images/omni-image/${taskId}`;
             const res = await fetch(url, { headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' } });
+            
+            if (res.status >= 400) {
+                 updateAssetStatus(assetId, 'failed', '请求失败');
+                 clearInterval(interval);
+                 return;
+            }
+
             const data = await res.json();
+            
+            if (data.code !== 0 && data.code !== 200) { 
+                 if (!data.data) {
+                      updateAssetStatus(assetId, 'failed', data.message || 'API Error');
+                      clearInterval(interval);
+                      return;
+                 }
+            }
             
             const taskStatus = data.data?.task_status || '';
             
@@ -1376,28 +1406,20 @@ URL=${window.location.href}
                  if (imageUrl) {
                     const finishTime = Date.now();
                     const diff = Math.round((finishTime - startTime) / 1000);
-                    const assetUpdates = { status: 'completed' as const, url: imageUrl, genTimeLabel: `${diff}s` };
-                    
-                    setGeneratedAssets(prev => prev.map(a => a.id === assetId ? { ...a, ...assetUpdates } : a));
-                    
-                    const assets = await getAllAssetsFromDB();
-                    const existing = assets.find(a => a.id === assetId);
-                    if (existing) {
-                        saveAssetToDB({ ...existing, ...assetUpdates });
-                    }
+                    updateAssetStatus(assetId, 'completed', `${diff}s`, imageUrl);
                  } else {
-                     setGeneratedAssets(prev => prev.map(a => a.id === assetId ? { ...a, status: 'failed', genTimeLabel: '无图' } : a));
+                     updateAssetStatus(assetId, 'failed', '无图');
                  }
                  clearInterval(interval);
             } else if (taskStatus === 'failed') {
                  const errorMsg = data.data?.task_status_msg || '失败';
-                 setGeneratedAssets(prev => prev.map(a => a.id === assetId ? { ...a, status: 'failed', genTimeLabel: errorMsg } : a));
+                 updateAssetStatus(assetId, 'failed', errorMsg);
                  clearInterval(interval);
             }
         } catch (e) {
             console.error("Polling error for kling task", taskId, e);
         }
-    }, 3000);
+    }, 2000);
   };
 
   const startKlingVideoPolling = (taskId: string, assetId: string, startTime: number, endpointType: string) => {
@@ -1407,8 +1429,23 @@ URL=${window.location.href}
         try {
             const url = `${configRef.current.baseUrl}/kling/v1/videos/${endpointType}/${taskId}`;
             const res = await fetch(url, { headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' } });
+            
+            if (res.status >= 400) {
+                 updateAssetStatus(assetId, 'failed', '请求失败');
+                 clearInterval(interval);
+                 return;
+            }
+
             const data = await res.json();
             
+            if (data.code !== 0 && data.code !== 200) { 
+                 if (!data.data) {
+                      updateAssetStatus(assetId, 'failed', data.message || 'API Error');
+                      clearInterval(interval);
+                      return;
+                 }
+            }
+
             const taskStatus = data.data?.task_status || '';
             const taskResult = data.data?.task_result;
             
@@ -1417,28 +1454,20 @@ URL=${window.location.href}
                  if (videoUrl) {
                     const finishTime = Date.now();
                     const diff = Math.round((finishTime - startTime) / 1000);
-                    const assetUpdates = { status: 'completed' as const, url: videoUrl, genTimeLabel: `${diff}s` };
-                    
-                    setGeneratedAssets(prev => prev.map(a => a.id === assetId ? { ...a, ...assetUpdates } : a));
-                    
-                    const assets = await getAllAssetsFromDB();
-                    const existing = assets.find(a => a.id === assetId);
-                    if (existing) {
-                        saveAssetToDB({ ...existing, ...assetUpdates });
-                    }
+                    updateAssetStatus(assetId, 'completed', `${diff}s`, videoUrl);
                  } else {
-                     setGeneratedAssets(prev => prev.map(a => a.id === assetId ? { ...a, status: 'failed', genTimeLabel: '无视频' } : a));
+                     updateAssetStatus(assetId, 'failed', '无视频');
                  }
                  clearInterval(interval);
             } else if (taskStatus === 'failed') {
                  const errorMsg = data.data?.task_status_msg || '失败';
-                 setGeneratedAssets(prev => prev.map(a => a.id === assetId ? { ...a, status: 'failed', genTimeLabel: errorMsg } : a));
+                 updateAssetStatus(assetId, 'failed', errorMsg);
                  clearInterval(interval);
             }
         } catch (e) {
             console.error("Polling error for kling video task", taskId, e);
         }
-    }, 5000);
+    }, 3000);
   };
 
   const startVideoPolling = (taskId: string, assetId: string, startTime: number, modelId: string) => {
@@ -1450,8 +1479,29 @@ URL=${window.location.href}
             const url = isVeoGrokJimeng ? `${configRef.current.baseUrl}/v1/video/query?id=${taskId}` : `${configRef.current.baseUrl}/v1/videos/${taskId}`;
             
             const res = await fetch(url, { headers: { 'Authorization': `Bearer ${key}`, 'Accept': 'application/json' } });
+            
+            if (res.status >= 400) {
+                 const errText = await res.text();
+                 try {
+                    const errJson = JSON.parse(errText);
+                    const msg = errJson.message || errJson.error?.message || `HTTP ${res.status}`;
+                    updateAssetStatus(assetId, 'failed', '请求失败');
+                 } catch (e) {
+                    updateAssetStatus(assetId, 'failed', `HTTP ${res.status}`);
+                 }
+                 clearInterval(interval);
+                 return;
+            }
+
             const data = await res.json();
             
+            // Check for API level error objects
+            if (data.error) {
+                 updateAssetStatus(assetId, 'failed', data.error.message || 'API Error');
+                 clearInterval(interval);
+                 return;
+            }
+
             const rawStatus = (data.status || data.state || data.data?.status || '').toLowerCase();
             const videoUrl = data.video_url || data.url || data.uri || data.data?.url || data.data?.video_url;
 
@@ -1461,32 +1511,17 @@ URL=${window.location.href}
             if (isSuccess && videoUrl) {
                 const finishTime = Date.now();
                 const diff = Math.round((finishTime - startTime) / 1000);
-                const assetUpdates = { status: 'completed' as const, url: videoUrl, genTimeLabel: `${diff}s` };
-                
-                setGeneratedAssets(prev => prev.map(a => a.id === assetId ? { ...a, ...assetUpdates } : a));
-                
-                const assets = await getAllAssetsFromDB();
-                const existing = assets.find(a => a.id === assetId);
-                if (existing) {
-                    saveAssetToDB({ ...existing, ...assetUpdates });
-                }
-                
+                updateAssetStatus(assetId, 'completed', `${diff}s`, videoUrl);
                 clearInterval(interval);
             } else if (isFailed) {
-                setGeneratedAssets(prev => prev.map(a => a.id === assetId ? { ...a, status: 'failed', genTimeLabel: '失败' } : a));
-                
-                const assets = await getAllAssetsFromDB();
-                const existing = assets.find(a => a.id === assetId);
-                if (existing) {
-                    saveAssetToDB({ ...existing, status: 'failed', genTimeLabel: '失败' });
-                }
-
+                const reason = data.fail_reason || data.error_msg || data.error || '失败';
+                updateAssetStatus(assetId, 'failed', reason);
                 clearInterval(interval);
             }
         } catch (e) { 
             console.error("Polling error for task", taskId, e); 
         }
-    }, 5000);
+    }, 3000);
   };
   
   const resetInputState = () => {
@@ -1523,7 +1558,7 @@ URL=${window.location.href}
         } else if (selectedVideoModel === 'veo_3_1-fast-components-4K') {
             max = 3;
         } else {
-            max = (selectedVideoModel.startsWith('veo') || selectedVideoModel.startsWith('grok')) ? 2 : 1;
+            max = selectedVideoModel.startsWith('veo') ? 2 : 1;
         }
     }
 
@@ -1996,6 +2031,28 @@ RoleName必须严格对应用户输入中的角色名。`;
   const handleDragEnd = () => {
     setDraggedPromptIdx(null);
     localStorage.setItem('viva_library_prompts', JSON.stringify(libraryPrompts));
+  };
+  
+  // Resource Drag Handlers
+  const handleResourceDragStart = (idx: number) => {
+    setDraggedResourceIdx(idx);
+  };
+
+  const handleResourceDragOver = (e: React.DragEvent, idx: number) => {
+    e.preventDefault();
+    if (draggedResourceIdx === null || draggedResourceIdx === idx) return;
+    
+    const items = [...resourceItems];
+    const draggedItem = items[draggedResourceIdx];
+    items.splice(draggedResourceIdx, 1);
+    items.splice(idx, 0, draggedItem);
+    
+    setDraggedResourceIdx(idx);
+    setResourceItems(items);
+  };
+
+  const handleResourceDragEnd = () => {
+    setDraggedResourceIdx(null);
   };
 
   // ... (Generation handlers reused) ...
@@ -2822,6 +2879,7 @@ RoleName必须严格对应用户输入中的角色名。`;
                   { id: 'image', icon: ImageIcon, label: '绘画', action: () => { setMainCategory('image'); resetInputState(); }, active: mainCategory === 'image' },
                   { id: 'video', icon: Video, label: '视频', action: () => { setMainCategory('video'); resetInputState(); }, active: mainCategory === 'video' },
                   { id: 'audio', icon: Mic, label: '语音', action: () => { setMainCategory('audio'); resetInputState(); }, active: mainCategory === 'audio' },
+                  { id: 'resources', icon: FolderOpen, label: '资源', action: () => { setMainCategory('resources'); resetInputState(); }, active: mainCategory === 'resources' },
                   { id: 'proxy', icon: Shield, label: '代理', action: () => { setMainCategory('proxy'); resetInputState(); }, active: mainCategory === 'proxy' },
                   { id: 'announcement', icon: Megaphone, label: '公告', action: () => { setMainCategory('announcement'); resetInputState(); }, active: mainCategory === 'announcement' },
               ].map(item => (
@@ -2962,6 +3020,66 @@ RoleName必须严格对应用户输入中的角色名。`;
                     </div>
                 </div>
             </div>
+        ) : mainCategory === 'resources' ? (
+            <div className="flex-1 bg-[#F8FAFC] overflow-y-auto p-4 md:p-8 min-h-0">
+                <div className="max-w-5xl mx-auto space-y-8 animate-in slide-in-from-bottom-4 fade-in duration-500">
+                    {/* Header Hero */}
+                    <div className="bg-[#4ADE80] border-2 border-black p-8 md:p-12 brutalist-shadow text-white relative overflow-hidden group">
+                         <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-black/10 skew-x-[-20deg] translate-x-1/2 group-hover:translate-x-1/3 transition-transform duration-700"></div>
+                         <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+                            <div className="space-y-4">
+                                <div className="inline-flex items-center gap-2 bg-white text-[#4ADE80] border-2 border-black px-3 py-1 text-xs font-black uppercase tracking-wider">
+                                    <FolderOpen className="w-4 h-4 fill-current" />
+                                    Useful Tools
+                                </div>
+                                <h2 className="text-4xl md:text-6xl font-black italic uppercase tracking-tighter leading-[0.9]">
+                                    免费资源<br/><span className="text-brand-yellow text-stroke-black">Free Resources</span>
+                                </h2>
+                            </div>
+                            <div className="bg-black/20 p-4 border border-white/30 backdrop-blur-sm max-w-sm">
+                                <p className="text-sm font-medium leading-relaxed">
+                                    精选各类免费实用的在线工具与资源，助力您的创作。可拖动卡片进行排序。
+                                </p>
+                            </div>
+                         </div>
+                    </div>
+
+                    {/* Resources Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                         {resourceItems.map((item, idx) => (
+                             <a 
+                                key={item.id}
+                                href={item.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                draggable
+                                onDragStart={() => handleResourceDragStart(idx)}
+                                onDragOver={(e) => handleResourceDragOver(e, idx)}
+                                onDragEnd={handleResourceDragEnd}
+                                className="group bg-white border-2 border-black hover:border-brand-blue brutalist-shadow transition-all hover:-translate-y-1 cursor-pointer flex flex-col h-full relative"
+                             >
+                                 <div className="p-6 flex-1 space-y-4">
+                                     <div className="flex justify-between items-start">
+                                         <div className="w-12 h-12 bg-brand-yellow border border-black flex items-center justify-center shrink-0 group-hover:rotate-12 transition-transform duration-300">
+                                             {item.icon === 'Mic' ? <Mic className="w-6 h-6" /> : item.icon === 'Monitor' ? <Monitor className="w-6 h-6" /> : <ImageIcon className="w-6 h-6" />}
+                                         </div>
+                                         <div className="flex items-center gap-3">
+                                             <ExternalLink className="w-5 h-5 text-brand-blue opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
+                                             <div onClick={(e) => e.preventDefault()} className="cursor-grab active:cursor-grabbing hover:bg-slate-100 rounded p-1 -mr-1 transition-colors">
+                                                 <GripVertical className="w-5 h-5 text-slate-300 hover:text-black transition-colors" title="拖动排序" />
+                                             </div>
+                                         </div>
+                                     </div>
+                                     <div className="space-y-2">
+                                         <h3 className="text-xl font-bold uppercase italic tracking-tight group-hover:text-brand-blue transition-colors">{item.name}</h3>
+                                         <p className="text-sm text-slate-600 font-medium leading-relaxed">{item.desc}</p>
+                                     </div>
+                                 </div>
+                             </a>
+                         ))}
+                    </div>
+                </div>
+            </div>
         ) : mainCategory === 'proxy' ? (
             <div className="flex-1 bg-[#F8FAFC] overflow-y-auto p-4 md:p-8 min-h-0">
                 <div className="max-w-5xl mx-auto space-y-8 animate-in slide-in-from-bottom-4 fade-in duration-500">
@@ -3003,7 +3121,7 @@ RoleName必须严格对应用户输入中的角色名。`;
                             "最快一天部署上线，代理费达标后可全额返还",
                             "2026弯道超车的机会，望君把握"
                         ].map((text, i) => (
-                            <div key={i} className="group bg-white border-2 border-black p-5 transition-all duration-300 flex gap-4 items-start hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-brand-cream">
+                            <div key={i} className="group bg-white border-2 border-black p-5 transition-all duration-300 flex gap-4 items-start hover:-translate-y-1 hover:bg-brand-cream">
                                 <span className="shrink-0 w-8 h-8 flex items-center justify-center bg-brand-yellow border border-black font-black text-lg group-hover:bg-black group-hover:text-white transition-all duration-300 group-hover:scale-110 group-hover:rotate-12">
                                     {i + 1}
                                 </span>
@@ -3028,12 +3146,13 @@ RoleName必须严格对应用户输入中的角色名。`;
                 </div>
             </div>
         ) : (
+        // ... (Main generation config panel code remains same) ...
         <div className="flex-1 overflow-y-auto px-5 pb-5 pt-2 space-y-6 no-scrollbar">
           
+          {!isAudioMode && (
           <section className="space-y-3">
-            
-            {/* Reference Images / Audio Upload Section */}
-              <div className={`p-3 bg-brand-cream border border-black brutalist-shadow-sm ${referenceImages.length > 0 || referenceVideo || (isAudioMode && referenceAudio) ? 'solid-box-green' : 'solid-box-purple'}`}>
+             {/* ... (Upload sections kept same) ... */}
+              <div className={`p-3 bg-brand-cream border border-black brutalist-shadow-sm ${referenceImages.length > 0 || referenceVideo || referenceAudio ? 'solid-box-green' : 'solid-box-purple'}`}>
                   {isVideoMode && selectedVideoModel === 'kling-motion-control' ? (
                       // ... (Motion control content same)
                       <div className="space-y-4">
@@ -3166,7 +3285,7 @@ RoleName必须严格对应用户输入中的角色名。`;
                       <>
                           <div className="flex justify-between items-center mb-1">
                               <h3 className={labelClass}>
-                                  {`参考底稿 (可选) ${!isVideoMode ? '' : `(限${selectedVideoModel === 'kling-avatar-image2video' || selectedVideoModel === 'kling-motion-control' ? '1' : ((selectedVideoModel === 'veo_3_1-fast-components-4K' ? '3' : (selectedVideoModel.startsWith('veo') || selectedVideoModel.startsWith('grok')) ? '2' : '1'))}张)`}`}
+                                  {`参考底稿 (可选) ${!isVideoMode ? '' : `(限${selectedVideoModel === 'kling-avatar-image2video' || selectedVideoModel === 'kling-motion-control' ? '1' : ((selectedVideoModel === 'veo_3_1-fast-components-4K' ? '3' : (selectedVideoModel.startsWith('veo')) ? '2' : '1'))}张)`}`}
                               </h3>
                               {(referenceImages.length > 0) && <span className="text-brand-green text-xs font-normal flex items-center gap-1"><Check className="w-3 h-3"/> READY</span>}
                           </div>
@@ -3182,7 +3301,7 @@ RoleName必须严格对应用户输入中的角色名。`;
                                                 onDoubleClick={() => setPreviewRefImage(img)}>
                                             <img src={img.data.startsWith('http') ? img.data : `data:${img.mimeType};base64,${img.data}`} className="w-full h-full object-cover" />
                                             <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[9px] text-center uppercase py-0.5">
-                                                {(isVideoMode && (selectedVideoModel.startsWith('veo') || selectedVideoModel.startsWith('grok'))) ? (idx === 0 ? '首帧' : '尾帧') : 'REF'}
+                                                {(isVideoMode && selectedVideoModel.startsWith('veo') && selectedVideoModel !== 'veo_3_1-fast-components-4K') ? (idx === 0 ? '首帧' : '尾帧') : 'REF'}
                                             </div>
                                             <button onClick={(e) => { e.stopPropagation(); removeReferenceImage(img.id); }} 
                                                     className="absolute -top-2.5 -right-2.5 bg-brand-red text-white border border-black w-6 h-6 flex items-center justify-center hover:scale-110 transition-transform brutalist-shadow-sm z-10">
@@ -3190,7 +3309,7 @@ RoleName必须严格对应用户输入中的角色名。`;
                                             </button>
                                             </div>
                                         ))}
-                                        {((!isVideoMode ? referenceImages.length < (currentImageModel?.maxImages || 4) : referenceImages.length < (selectedVideoModel === 'kling-avatar-image2video' || selectedVideoModel === 'kling-motion-control' ? 1 : (selectedVideoModel === 'veo_3_1-fast-components-4K' ? 3 : (selectedVideoModel.startsWith('veo') || selectedVideoModel.startsWith('grok')) ? 2 : 1)))) && (
+                                        {((!isVideoMode ? referenceImages.length < (currentImageModel?.maxImages || 4) : referenceImages.length < (selectedVideoModel === 'kling-avatar-image2video' || selectedVideoModel === 'kling-motion-control' ? 1 : (selectedVideoModel === 'veo_3_1-fast-components-4K' ? 3 : (selectedVideoModel.startsWith('veo')) ? 2 : 1)))) && (
                                             <label className="w-24 h-24 border border-black flex items-center justify-center cursor-pointer bg-white brutalist-shadow-sm">
                                             <Plus className="w-6 h-6" /><input type="file" multiple={!isVideoMode} accept=".jpg, .jpeg, .png" className="hidden" onChange={handleImageUpload} />
                                             </label>
@@ -3212,8 +3331,8 @@ RoleName必须严格对应用户输入中的角色名。`;
                             )}
                             
                             {(isVideoMode && selectedVideoModel === 'kling-avatar-image2video') && (
-                                <div className={`mt-2 pt-2 ${!isAudioMode ? 'border-t border-black/10' : ''}`}>
-                                    {!isAudioMode && <label className={labelClass}>驱动音频 (AUDIO) {referenceAudio && <span className="text-brand-green text-[10px]"><Check className="inline w-3 h-3"/></span>}</label>}
+                                <div className={`mt-2 pt-2 border-t border-black/10`}>
+                                    <label className={labelClass}>驱动音频 (AUDIO) {referenceAudio && <span className="text-brand-green text-[10px]"><Check className="inline w-3 h-3"/></span>}</label>
                                     {referenceAudio ? (
                                         <div className="relative mt-2 p-2 bg-white border border-black brutalist-shadow-sm flex flex-col gap-2">
                                             <div className="flex items-center gap-2 w-full">
@@ -3243,9 +3362,9 @@ RoleName必须严格对应用户输入中的角色名。`;
                   )}
               </div>
           </section>
-          
+          )}
 
-          {!isChatMode && !isAnnouncementMode && !isProxyMode && (
+          {!isChatMode && !isAnnouncementMode && !isProxyMode && !isResourcesMode && (
           <section className="space-y-3">
              <SectionLabel 
                 text={isAudioMode ? "语音配置 / Voice Config" : "生成配置 / Generation Config"} 
@@ -3605,7 +3724,7 @@ RoleName必须严格对应用户输入中的角色名。`;
           )}
 
           <div className="space-y-3">
-            {!isChatMode && !isAnnouncementMode && !isProxyMode && (
+            {!isChatMode && !isAnnouncementMode && !isProxyMode && !isResourcesMode && (
               <>
                 <button onClick={() => executeGeneration()} className="w-full py-3 bg-brand-red text-white text-xl font-normal border border-black brutalist-shadow hover:translate-y-1.5 hover:shadow-none transition-all uppercase tracking-tighter">
                   开始创作/Start Creating
@@ -3667,11 +3786,15 @@ RoleName必须严格对应用户输入中的角色名。`;
              <div className="animate-marquee whitespace-nowrap flex items-center gap-8">
                <span className="text-base font-medium text-brand-red flex items-center gap-2">
                   <AlertTriangle className="w-5 h-5" />
-                  本应用不存储用户生成资产，请及时下载保存。
+                  本应用资产仅存储于用户本地浏览器中，请及时下载保存。
+               </span>
+               <span className="text-base font-medium text-brand-red flex items-center gap-2">
+                  <AlertCircle className="w-5 h-5" />
+                  生成内容时请勿刷新页面，否则容易中断。
                </span>
                <span className="text-base font-medium text-brand-red flex items-center gap-2">
                   <Megaphone className="w-5 h-5" />
-                  我们将优先维护好sora-vip分组，保证使用成功率。
+                  对于sora-2模型，目前不保证成功率，有新消息会及时通知。
                </span>
              </div>
            </div>
@@ -3702,9 +3825,9 @@ RoleName必须严格对应用户输入中的角色名。`;
                      </div>
                   ) : asset.status === 'failed' ? (
                      <div className="w-full h-full flex flex-col items-center justify-center p-8 bg-brand-cream gap-2">
-                        <div className="bg-brand-red text-white border border-black px-6 py-4 brutalist-shadow-sm flex flex-col items-center justify-center min-w-[140px]">
-                           <AlertTriangle className="w-10 h-10 mb-2" />
-                           <span className="font-medium text-xl uppercase tracking-tighter italic text-center">生成失败</span>
+                        <div className="bg-brand-red text-white border border-black px-3 py-2 brutalist-shadow-sm flex flex-col items-center justify-center min-w-[80px]">
+                           <AlertTriangle className="w-5 h-5 mb-1" />
+                           <span className="font-bold text-xs uppercase tracking-tight text-center">生成失败</span>
                         </div>
                         <span className="text-xs text-brand-red uppercase font-normal italic tracking-widest mt-2 bg-white px-2 border border-black">{asset.genTimeLabel || 'FAIL'}</span>
                      </div>
@@ -4182,7 +4305,7 @@ RoleName必须严格对应用户输入中的角色名。`;
 
                 {/* Content */}
                 <div className="flex-1 overflow-hidden bg-[#f3f4f6] p-8 flex items-center justify-center min-h-[300px]">
-                     <div className="relative max-w-full max-h-full shadow-xl border-4 border-white bg-white">
+                     <div className="relative max-w-full max-h-full shadow-xl border-2 border-black bg-white">
                          {previewAsset.type === 'image' ? (
                             <img src={previewAsset.url} className="max-w-full max-h-[calc(90vh-12rem)] object-contain block" />
                         ) : (
@@ -4227,7 +4350,7 @@ RoleName必须严格对应用户输入中的角色名。`;
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4" onClick={() => setPreviewRefImage(null)}>
             <button className="absolute top-4 right-4 text-white hover:text-brand-yellow transition-colors"><X className="w-10 h-10"/></button>
             <div className="max-w-[90vw] max-h-[90vh] relative flex items-center justify-center" onClick={e => e.stopPropagation()}>
-                <img src={previewRefImage.data.startsWith('http') ? previewRefImage.data : `data:${previewRefImage.mimeType};base64,${previewRefImage.data}`} className="max-w-full max-h-[85vh] object-contain border-2 border-white shadow-2xl" />
+                <img src={previewRefImage.data.startsWith('http') ? previewRefImage.data : `data:${previewRefImage.mimeType};base64,${previewRefImage.data}`} className="max-w-full max-h-[85vh] object-contain border-2 border-black shadow-2xl bg-white" />
             </div>
         </div>
       )}
