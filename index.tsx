@@ -3193,11 +3193,11 @@ RoleName必须严格对应用户输入中的角色名。`;
                                 onDragStart={() => handleResourceDragStart(idx)}
                                 onDragOver={(e) => handleResourceDragOver(e, idx)}
                                 onDragEnd={handleResourceDragEnd}
-                                className="group bg-white border-2 border-black hover:border-brand-blue brutalist-shadow transition-all hover:-translate-y-1 cursor-pointer flex flex-col h-full relative"
+                                className="group bg-white border-2 border-black brutalist-shadow transition-all hover:-translate-y-1 cursor-pointer flex flex-col h-full relative"
                              >
                                  <div className="p-6 flex-1 space-y-4">
                                      <div className="flex justify-between items-start">
-                                         <div className="w-12 h-12 bg-brand-yellow border border-black flex items-center justify-center shrink-0 group-hover:rotate-12 transition-transform duration-300">
+                                         <div className="w-12 h-12 bg-brand-yellow border border-black flex items-center justify-center shrink-0">
                                              {item.icon === 'Mic' ? <Mic className="w-6 h-6" /> : 
                                               item.icon === 'Monitor' ? <Monitor className="w-6 h-6" /> : 
                                               item.icon === 'Link' ? <Link className="w-6 h-6" /> :
@@ -3212,7 +3212,7 @@ RoleName必须严格对应用户输入中的角色名。`;
                                          </div>
                                      </div>
                                      <div className="space-y-2">
-                                         <h3 className="text-xl font-bold uppercase italic tracking-tight group-hover:text-brand-blue transition-colors">{item.name}</h3>
+                                         <h3 className="text-xl font-bold uppercase italic tracking-tight">{item.name}</h3>
                                          <p className="text-sm text-slate-600 font-medium leading-relaxed">{item.desc}</p>
                                      </div>
                                  </div>
@@ -3262,18 +3262,18 @@ RoleName必须严格对应用户输入中的角色名。`;
                             "最快一天部署上线，代理费达标后可全额返还",
                             "2026弯道超车的机会，望君把握"
                         ].map((text, i) => (
-                            <div key={i} className="group bg-white border-2 border-black p-5 transition-all duration-300 flex gap-4 items-start hover:-translate-y-1 hover:bg-brand-cream">
-                                <span className="shrink-0 w-8 h-8 flex items-center justify-center bg-brand-yellow border border-black font-black text-lg group-hover:bg-black group-hover:text-white transition-all duration-300 group-hover:scale-110 group-hover:rotate-12">
+                            <div key={i} className="group bg-white border-2 border-black p-5 transition-all duration-300 flex gap-4 items-start hover:-translate-y-1">
+                                <span className="shrink-0 w-8 h-8 flex items-center justify-center bg-brand-yellow border border-black font-black text-lg">
                                     {i + 1}
                                 </span>
-                                <p className="font-bold text-sm md:text-base text-slate-800 pt-1 group-hover:text-black transition-colors">{text}</p>
+                                <p className="font-bold text-sm md:text-base text-slate-800 pt-1">{text}</p>
                             </div>
                         ))}
                     </div>
 
                     {/* CTA Section */}
                     <a href="https://ai.feishu.cn/wiki/O6Q9wrxxci898Wkj6ndcFnlknJd?from=from_copylink" target="_blank" className="block group relative">
-                        <div className="relative bg-white border-2 border-black p-8 flex flex-col md:flex-row items-center justify-between gap-6 hover:-translate-x-1 hover:-translate-y-1 transition-transform cursor-pointer">
+                        <div className="relative bg-white border-2 border-black p-8 flex flex-col md:flex-row items-center justify-between gap-6 hover:-translate-y-1 transition-transform cursor-pointer">
                             <div className="space-y-2">
                                 <h3 className="text-2xl font-black uppercase italic">立即加入代理计划</h3>
                                 <p className="text-slate-600 font-medium">查看详细招募文档，获取更多权益详情</p>
