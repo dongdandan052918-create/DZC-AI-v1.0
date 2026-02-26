@@ -1164,7 +1164,7 @@ const App = () => {
     { id: 'img-conv', name: '图片格式转换', desc: '支持JPG, PNG, BMP, WEBP等多种格式互转。', url: 'https://www.xunjietupian.com/', icon: 'ImageIcon' },
     { id: 'uu-remote', name: '网易UU远程', desc: '网易出品，免费高清流畅的远程控制软件。', url: 'https://uuyc.163.com', icon: 'Monitor' },
     { id: 'img-url', name: '图片转URL链接', desc: '快速将图片转换为在线URL链接。', url: 'https://lsky.zhongzhuan.chat', icon: 'Link' },
-    { id: 'vpn', name: '科学上网（付费）', desc: '高速稳定的网络加速服务。', url: 'https://cm.caomeiyun.top/#/register?code=iPB4QjfQ', icon: 'Globe' }
+    { id: 'vpn', name: '科学上网（付费）', desc: '高速稳定的网络加速服务。', url: 'https://caomei888.top/#/register?code=iPB4QjfQ', icon: 'Globe' }
   ]);
   const [draggedResourceIdx, setDraggedResourceIdx] = useState<number | null>(null);
 
