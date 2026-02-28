@@ -4299,7 +4299,7 @@ RoleName必须严格对应用户输入中的角色名。`;
       {activeModal === 'links' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
           <div className="w-[500px] bg-white border-2 border-black brutalist-shadow animate-in zoom-in-95 relative">
-            <ModalHeader title="联系客服 / CONTACT SUPPORT" icon={Headset} onClose={() => setActiveModal(null)} />
+            <ModalHeader title="联系客服 / SUPPORT" icon={Headset} onClose={() => setActiveModal(null)} />
             <div className="p-8 space-y-6">
                <div className="bg-brand-cream border-2 border-black p-6 flex flex-col items-center gap-4 relative overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
                   <div className="absolute top-0 right-0 bg-brand-yellow px-3 py-1 border-l border-b border-black font-normal text-[10px] uppercase">Online</div>
