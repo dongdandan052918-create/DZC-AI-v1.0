@@ -3037,6 +3037,7 @@ RoleName必须严格对应用户输入中的角色名。`;
                   { id: 'resources', icon: FolderOpen, label: '资源', action: () => { setMainCategory('resources'); resetInputState(); }, active: mainCategory === 'resources' },
                   { id: 'proxy', icon: Shield, label: '代理', action: () => { setMainCategory('proxy'); resetInputState(); }, active: mainCategory === 'proxy' },
                   { id: 'announcement', icon: Megaphone, label: '公告', action: () => { setMainCategory('announcement'); resetInputState(); }, active: mainCategory === 'announcement' },
+                  { id: 'case', icon: BookOpen, label: '案例', action: () => { window.open('https://my.feishu.cn/wiki/LIEvwzn0jipQ4PkF0dkc57I2njh?from=from_copylink', '_blank'); }, active: false },
               ].map(item => (
                   <button 
                       key={item.id}
