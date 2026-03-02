@@ -233,8 +233,7 @@ const VIDEO_MODELS = [
     desc: '标清视频', 
     supportedAspectRatios: ['9:16', '16:9'],
     options: [
-      {s: '10', q: '标清'}, 
-      {s: '15', q: '标清'}
+      {s: '10', q: '标清'}
     ] 
   },
   { 
@@ -1016,59 +1015,57 @@ const PRICE_DATA = [
   {
     category: 'AI对话',
     items: [
-      { m: 'Gemini-3-Flash', p: '提示0.30元/ 1M tokens，补全1.26元/ 1M tokens' },
-      { m: 'Gemini-3-Pro-Preview', p: '提示1.20元/ 1M tokens，补全7.20元/ 1M tokens' },
-      { m: 'GPT-5-Mini', p: '提示0.15元/ 1M tokens，补全1.20元/ 1M tokens' }
+      { m: 'Gemini-3-Flash', p: '提示0.210元/ 1M tokens，补全1.260元/ 1M tokens' },
+      { m: 'Gemini-3-Pro', p: '提示0.840元/ 1M tokens，补全5.040元/ 1M tokens' },
+      { m: 'GPT-5-Mini', p: '提示0.105元/ 1M tokens，补全0.840元/ 1M tokens' }
     ]
   },
   {
     category: '图片创作',
     items: [
-      { m: 'Gemini-2.5-Flash-Image', p: '0.06元/张' },
-      { m: 'Gemini-3.1-Flash-Image', p: '1K/2K 0.116元/张，4K 0.207元/张' },
-      { m: 'Gemini-3-Pro-Image', p: '1K/2K 0.14元/张，4K 0.25元/张' },
-      { m: 'KLING Image O1', p: '0.24元/张' },
-      { m: 'GPT Image 1', p: '0.06元/张' },
-      { m: 'GPT Image 1.5', p: '0.06元/张' },
-      { m: 'Grok 4 Image', p: '0.06元/张' },
+      { m: 'Gemini-2.5-Flash-Image', p: '0.063元/张' },
+      { m: 'Gemini-3.1-Flash-Image', p: '1K/2K 0.070元/张，4K 0.087元/张' },
+      { m: 'Gemini-3-Pro-Image', p: '1K/2K 0.139元/张，4K 0.248元/张' },
+      { m: 'KLING Image O1', p: '0.241元/张' },
+      { m: 'GPT Image 1', p: '0.056元/张' },
+      { m: 'GPT Image 1.5', p: '0.056元/张' },
+      { m: 'Grok 4 Image', p: '0.056元/张' },
     ]
   },
   {
     category: '视频创作',
     items: [
-      { m: 'Sora-2-all', p: 'default分组 0.14元/条，sora-vip分组 0.56元/条' },
-      { m: 'Sora-2-vip-all', p: 'sora-vip分组 1.75元/条' },
+      { m: 'Sora-2-all', p: '0.140元/条' },
+      { m: 'Sora-2-vip-all', p: '1.750元/条' },
       { m: 'Sora-2', p: <div className="flex flex-col items-end text-right">
-        <div>官转 0.21元/秒</div>
-        <div>官转Open AI分组 0.42元/秒</div>
-        <div>优质官转Open AI分组 0.56元/秒</div>
+        <div>官转 0.210元/秒</div>
+        <div>官转OpenAI分组 0.420元/秒</div>
+        <div>优质官转OpenAI分组 0.560元/秒</div>
       </div> },
-      { m: 'Sora-2-Pro-All', p: '2.52元/条' },
-      { m: 'veo_3_1-fast', p: '0.18元/条' },
-      { m: 'veo_3_1-fast-4K', p: '0.18元/条' },
-      { m: 'veo_3_1-fast-components-4K', p: '0.36元/条' },
-      { m: 'veo_3_1', p: '0.31元/条' },
-      { m: 'veo_3_1-4K', p: '0.36元/条' },
-      { m: 'veo_3_1-components', p: '0.31元/条' },
-      { m: 'veo_3_1-components-4K', p: '0.36元/条' },
-      { m: 'veo3.1-fast', p: '0.49元/条' },
-      { m: 'veo3.1-fast-components', p: '0.11元/条' },
-      { m: 'veo3.1', p: '0.49元/条' },
-      { m: 'veo3.1-4k', p: '0.70元/条' },
-      { m: 'veo3.1-components', p: '0.29元/条' },
-      { m: 'veo3.1-components-4k', p: '0.70元/条' },
-      { m: 'veo3.1-pro-4k', p: '2.45元/条' },
-      { m: 'Grok Video 3', p: '0.14元/6秒，0.28元/10秒，0.35元/15秒' },
+      { m: 'Sora-2-Pro-All', p: '2.520元/条' },
+      { m: 'veo_3_1-fast', p: '0.181元/条' },
+      { m: 'veo_3_1-fast-4K', p: '0.181元/条' },
+      { m: 'veo_3_1-fast-components-4K', p: '0.361元/条' },
+      { m: 'veo_3_1', p: '0.307元/条' },
+      { m: 'veo_3_1-4K', p: '0.357元/条' },
+      { m: 'veo_3_1-components', p: '0.307元/条' },
+      { m: 'veo_3_1-components-4K', p: '0.357元/条' },
+      { m: 'veo3.1-fast', p: '0.490元/条' },
+      { m: 'veo3.1-fast-components', p: '0.109元/条' },
+      { m: 'veo3.1', p: '0.490元/条' },
+      { m: 'veo3.1-4k', p: '0.700元/条' },
+      { m: 'veo3.1-components', p: '0.294元/条' },
+      { m: 'veo3.1-components-4k', p: '0.700元/条' },
+      { m: 'veo3.1-pro-4k', p: '2.450元/条' },
+      { m: 'Grok Video 3', p: '0.140元/6秒，0.280元/10秒，0.350元/15秒' },
       { m: 'KLING Control Std (动作转移)', p: '0.595元/秒' },
       { m: 'KLING Control Pro (动作转移)', p: '0.952元/秒' },
-      { m: 'KLING Avatar Std (数字人)', p: '0.476元/秒' },
-      { m: 'KLING Avatar Pro (数字人)', p: '0.952元/秒' },
     ]
   },
   {
     category: '语音合成',
     items: [
-      { m: 'Gemini 2.5 Pro TTS', p: '提示0.50元/ 1M tokens，补全12.00元/ 1M tokens' },
+      { m: 'Gemini 2.5 Pro TTS', p: '提示0.700元/ 1M tokens，补全14.000元/ 1M tokens' },
     ]
   }
 ];
@@ -4462,7 +4459,7 @@ RoleName必须严格对应用户输入中的角色名。`;
 
       {activeModal === 'price' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="w-[600px] bg-white border-2 border-black brutalist-shadow animate-in zoom-in-95 relative flex flex-col max-h-[85vh]">
+          <div className="w-[700px] bg-white border-2 border-black brutalist-shadow animate-in zoom-in-95 relative flex flex-col max-h-[85vh]">
             <ModalHeader title="价格说明 / PRICING" icon="¥" onClose={() => setActiveModal(null)} />
             <PriceView />
             <div className="p-3 bg-brand-cream border-t-2 border-black shrink-0 text-center">
