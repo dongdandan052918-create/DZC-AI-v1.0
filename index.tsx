@@ -3282,7 +3282,7 @@ RoleName必须严格对应用户输入中的角色名。`;
                         
                         <div className="space-y-4">
                              {[
-                               { title: "Grok Video 3 升级", desc: "新增15S生成时长，支持音频同步功能。" },
+                                                               { title: "系统更新", desc: "支持代理跟随上级同步更新" },
                                { title: "语音功能优化", desc: "语音多人模式输入方式已优化，支持直观的剧本编辑。" }
                             ].map((item, idx) => (
                                  <div key={idx} className="group relative py-4 border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors px-2">
