@@ -4022,7 +4022,7 @@ RoleName必须严格对应用户输入中的角色名。`;
                   )}
 
                   {isAudioMode && (
-                       <div className="mb-2 text-xs text-brand-red font-normal">您可以使用自然语言来控制风格、语气、口音和节奏。也可点击AI一键生成</div>
+                       <div className="mb-2 text-xs text-brand-red font-normal">您可以使用自然语言来控制风格、语气、口音和节奏。也可AI生成</div>
                   )}
 
                   <div className="relative group">
