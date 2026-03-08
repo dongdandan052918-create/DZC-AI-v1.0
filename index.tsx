@@ -1671,14 +1671,33 @@ const App = () => {
     }, 3000);
   };
   
-  const resetInputState = () => {
+  const resetInputState = (options: { keepImages?: boolean } = {}) => {
     setPrompt('');
-    setReferenceImages([]);
+    if (!options.keepImages) setReferenceImages([]);
     setReferenceVideos([]);
     setReferenceAudios([]);
     setError(null);
     setDialogueLines([]);
   };
+
+  // Auto-trim reference images when model changes
+  useEffect(() => {
+    let limit = 4;
+    if (isVideoMode) {
+        if (selectedVideoModel === 'seedance-2.0') limit = 9;
+        else if (selectedVideoModel === 'kling-avatar-image2video' || selectedVideoModel === 'kling-motion-control') limit = 1;
+        else if (selectedVideoModel.includes('components')) limit = 3;
+        else if (selectedVideoModel.startsWith('veo')) limit = 2;
+        else limit = 1;
+    } else {
+        const model = MODELS.find(m => m.id === selectedModel);
+        limit = model?.maxImages || 4;
+    }
+
+    if (referenceImages.length > limit) {
+        setReferenceImages(prev => prev.slice(0, limit));
+    }
+  }, [selectedModel, selectedVideoModel, isVideoMode, referenceImages.length]);
 
   const handleAudioModeChange = (mode: 'single' | 'multi') => {
       setAudioGenMode(mode);
@@ -3159,8 +3178,8 @@ RoleName必须严格对应用户输入中的角色名。`;
           <div className="flex md:flex-col items-center gap-2 md:gap-4 w-full overflow-x-auto md:overflow-visible no-scrollbar px-4 md:px-0 py-4 md:py-6 md:flex-1 md:border-r-2 border-black">
               {[
                   { id: 'chat', icon: MessageSquare, label: '对话', action: () => { setMainCategory('chat'); resetInputState(); }, active: mainCategory === 'chat' },
-                  { id: 'image', icon: ImageIcon, label: '绘画', action: () => { setMainCategory('image'); resetInputState(); }, active: mainCategory === 'image' },
-                  { id: 'video', icon: Video, label: '视频', action: () => { setMainCategory('video'); resetInputState(); }, active: mainCategory === 'video' },
+                  { id: 'image', icon: ImageIcon, label: '绘画', action: () => { setMainCategory('image'); resetInputState({ keepImages: true }); }, active: mainCategory === 'image' },
+                  { id: 'video', icon: Video, label: '视频', action: () => { setMainCategory('video'); resetInputState({ keepImages: true }); }, active: mainCategory === 'video' },
                   { id: 'audio', icon: Mic, label: '语音', action: () => { setMainCategory('audio'); resetInputState(); }, active: mainCategory === 'audio' },
                   { id: 'resources', icon: FolderOpen, label: '资源', action: () => { setMainCategory('resources'); resetInputState(); }, active: mainCategory === 'resources' },
                   { id: 'proxy', icon: Shield, label: '代理', action: () => { setMainCategory('proxy'); resetInputState(); }, active: mainCategory === 'proxy' },
@@ -3454,7 +3473,7 @@ RoleName必须严格对应用户输入中的角色名。`;
                             </label>
                             {referenceImages.length > 0 ? (
                                 <div className="relative w-24 h-24 border border-black bg-white brutalist-shadow-sm flex-shrink-0 cursor-pointer"
-                                     onDoubleClick={() => setPreviewRefImage(referenceImages[0])}>
+                                     onClick={() => setPreviewRefImage(referenceImages[0])}>
                                     <img src={referenceImages[0].data.startsWith('http') ? referenceImages[0].data : `data:${referenceImages[0].mimeType};base64,${referenceImages[0].data}`} className="w-full h-full object-cover" />
                                     {referenceImages[0].uploadStatus === 'uploading' && (
                                         <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-white z-20">
@@ -3589,7 +3608,7 @@ RoleName必须严格对应用户输入中的角色名。`;
                                         {referenceImages.map((img: ReferenceImage, idx: number) => (
                                             <div key={img.id} 
                                                 className="relative w-24 h-24 border border-black bg-white brutalist-shadow-sm flex-shrink-0 cursor-pointer"
-                                                onDoubleClick={() => setPreviewRefImage(img)}>
+                                                onClick={() => setPreviewRefImage(img)}>
                                             <img src={img.data.startsWith('http') ? img.data : `data:${img.mimeType};base64,${img.data}`} className="w-full h-full object-cover" />
                                             <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[9px] text-center uppercase py-0.5">
                                                 {(() => {
@@ -3760,10 +3779,15 @@ RoleName必须严格对应用户输入中的角色名。`;
                   <select 
                     value={!isVideoMode && !isAudioMode ? selectedModel : (isAudioMode ? selectedAudioModel : selectedVideoModel)} 
                     onChange={(e) => {
-                        resetInputState();
-                        if (isAudioMode) setSelectedAudioModel(e.target.value);
-                        else if (!isVideoMode) setSelectedModel(e.target.value);
-                        else setSelectedVideoModel(e.target.value);
+                        setError(null);
+                        const newModelId = e.target.value;
+                        if (isAudioMode) {
+                            setSelectedAudioModel(newModelId);
+                        } else if (!isVideoMode) {
+                            setSelectedModel(newModelId);
+                        } else {
+                            setSelectedVideoModel(newModelId);
+                        }
                     }} 
                     className={selectClass}
                   >
