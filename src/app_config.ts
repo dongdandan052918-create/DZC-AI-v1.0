@@ -17,13 +17,13 @@ export const APP_CONFIG = {
   WECHAT_SERVICE: "DCDS131419",
 
   // 5. 客服查询更多详情链接（SUPPORT_DETAIL_URL）：默认值="https://www.xxxx.cn/support"，代理替换为专属链接
-  SUPPORT_DETAIL_URL: "https://ai.feishu.cn/wiki/O6Q9wrxxci898Wkj6ndcFnlknJd?from=from_copylink",
+  SUPPORT_DETAIL_URL: "https://gcnngk1h9zoa.feishu.cn/wiki/MAAcwT2uQi0wnak9QfrcxF0Unwg?from=from_copylink",
 
   // 6. 代理界面立即加入代理计划链接（AGENT_JOIN_URL）：默认值="https://www.xxxx.cn/join"，代理替换为专属链接
-  AGENT_JOIN_URL: "https://ai.feishu.cn/wiki/O6Q9wrxxci898Wkj6ndcFnlknJd?from=from_copylink",
+  AGENT_JOIN_URL: "https://gcnngk1h9zoa.feishu.cn/wiki/MAAcwT2uQi0wnak9QfrcxF0Unwg?from=from_copylink",
 
   // 7. 案例链接（CASE_URL）：默认值="https://www.xxxx.cn/case"，代理替换为专属链接
-  CASE_URL: "https://my.feishu.cn/wiki/LIEvwzn0jipQ4PkF0dkc57I2njh?from=from_copylink",
+  CASE_URL: "https://gcnngk1h9zoa.feishu.cn/wiki/YxDKw7kHyiXIPYkUKKpcNUVonsh?from=from_copylink",
 
   // 8. 保存到桌面的链接（DESKTOP_SAVE_URL）：默认值="a.xxxx.cn"，代理替换为部署到Vercel的自定义域名
   DESKTOP_SAVE_URL: "a.danzhichen.com",
