@@ -233,27 +233,8 @@ const MODEL_CAPABILITIES: Record<string, { image: boolean; audio: boolean; video
 };
 
 const VIDEO_MODELS = [
-  { 
-    id: 'sora-2-all', 
-    name: 'Sora-2-All', 
-    desc: '标清视频', 
-    supportedAspectRatios: ['9:16', '16:9'],
-    options: [
-      {s: '10', q: '标清'},
-      {s: '15', q: '标清'}
-    ] 
-  },
-  { 
-    id: 'sora-2', 
-    name: 'Sora-2(官转按秒计费)', 
-    desc: '标清视频', 
-    supportedAspectRatios: ['9:16', '16:9'],
-    options: [
-      {s: '4', q: '标清'}, 
-      {s: '8', q: '标清'},
-      {s: '12', q: '标清'}
-    ] 
-  },
+  { id: 'veo_3_1-lite', name: 'veo_3_1-lite', desc: '标清/首尾帧(0.35元/次)', supportedAspectRatios: ['16:9', '9:16'], options: [{s: '8', q: '标清'}] },
+  { id: 'veo_3_1-lite-4K', name: 'veo_3_1-lite-4K', desc: '4K/首尾帧(0.385元/次)', supportedAspectRatios: ['16:9', '9:16'], options: [{s: '8', q: '4K'}] },
   { id: 'veo_3_1-fast', name: 'veo_3_1-fast', desc: '标清/首尾帧', supportedAspectRatios: ['16:9', '9:16'], options: [{s: '8', q: '标清'}] },
   { id: 'veo_3_1-fast-4K', name: 'veo_3_1-fast-4K', desc: '4K/首尾帧', supportedAspectRatios: ['16:9', '9:16'], options: [{s: '8', q: '4K'}] },
   { id: 'veo_3_1-fast-components-4K', name: 'veo_3_1-fast-components-4K', desc: '4K/多图融合', supportedAspectRatios: ['16:9', '9:16'], options: [{s: '8', q: '4K'}] },
@@ -307,6 +288,27 @@ const VIDEO_MODELS = [
     supportedAspectRatios: ['原图比例'],
     options: [
       {s: 'AUTO', q: '标准模式'}, {s: 'AUTO', q: '高品质模式'}
+    ] 
+  },
+  { 
+    id: 'sora-2-all', 
+    name: 'Sora-2-All', 
+    desc: '标清视频', 
+    supportedAspectRatios: ['9:16', '16:9'],
+    options: [
+      {s: '10', q: '标清'},
+      {s: '15', q: '标清'}
+    ] 
+  },
+  { 
+    id: 'sora-2', 
+    name: 'Sora-2(官转按秒计费)', 
+    desc: '标清视频', 
+    supportedAspectRatios: ['9:16', '16:9'],
+    options: [
+      {s: '4', q: '标清'}, 
+      {s: '8', q: '标清'},
+      {s: '12', q: '标清'}
     ] 
   },
   { 
@@ -1214,13 +1216,8 @@ const PRICE_DATA = [
   {
     category: '视频模型',
     items: [
-      { m: 'Sora-2-all', p: 'default分组 0.14元/条' },
-      { m: 'Sora-2(官转按秒计费)', p: <div className="flex flex-col items-end text-right">
-        <div>官转 0.21元/秒</div>
-        <div>官转Open AI分组 0.42元/秒</div>
-        <div>优质官转Open AI分组 0.56元/秒</div>
-      </div> },
-      { m: 'Sora-2-Pro-All', p: '2.520元/条' },
+      { m: 'veo_3_1-lite', p: '0.350元/条' },
+      { m: 'veo_3_1-lite-4K', p: '0.385元/条' },
       { m: 'veo_3_1-fast', p: '0.301元/条' },
       { m: 'veo_3_1-fast-4K', p: '0.301元/条' },
       { m: 'veo_3_1-fast-components-4K', p: '0.602元/条' },
@@ -1240,6 +1237,13 @@ const PRICE_DATA = [
       { m: 'Kling Control Pro (动作转移)', p: '0.952元/秒' },
       { m: 'KLING Avatar Std (数字人)', p: '1.190元/秒' },
       { m: 'KLING Avatar Pro (数字人)', p: '2.380元/秒' },
+      { m: 'Sora-2-all', p: 'default分组 0.14元/条' },
+      { m: 'Sora-2(官转按秒计费)', p: <div className="flex flex-col items-end text-right">
+        <div>官转 0.21元/秒</div>
+        <div>官转Open AI分组 0.42元/秒</div>
+        <div>优质官转Open AI分组 0.56元/秒</div>
+      </div> },
+      { m: 'Sora-2-Pro-All', p: '2.520元/条' },
     ]
   },
   {
