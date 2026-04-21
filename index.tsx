@@ -1231,10 +1231,10 @@ const PRICE_DATA = [
       { m: 'Gemini-3-Pro-Image', p: '1K/2K 0.231元/张，4K 0.414元/张' },
       { m: 'Kling Image O1', p: '0.238元/张' },
       { m: 'GPT Image 1.5', p: '0.055元/张' },
+      { m: 'GPT Image 2', p: '0.084元/张' },
       { m: 'Grok 4 Image', p: '0.056元/张' },
       { m: 'Grok Imagine Image', p: '0.146元/张' },
       { m: 'Doubao Seedream 5.0', p: '0.154元/张' },
-      { m: 'GPT Image 2', p: '0.315元/张' },
     ]
   },
   {
