@@ -35,7 +35,7 @@ declare var process: {
   }
 };
 
-type ModalType = 'settings' | 'links' | 'usage' | 'price' | 'support' | 'edit-prompt' | 'edit-line' | 'styles' | 'library' | 'save-prompt-confirm' | 'video-remix' | null;
+type ModalType = 'settings' | 'links' | 'usage' | 'price' | 'support' | 'edit-prompt' | 'edit-line' | 'styles' | 'library' | 'save-prompt-confirm' | 'video-remix' | 'fallback-settings' | null;
 type MainCategory = 'image' | 'video' | 'proxy' | 'audio' | 'chat' | 'resources';
 
 interface AppConfig {
@@ -141,7 +141,6 @@ const ASPECT_RATIO_LABELS: Record<string, string> = {
 
 const EXTENDED_RATIOS = ['1:1', '2:3', '3:2', '3:4', '4:3', '4:5', '5:4', '9:16', '16:9', '21:9'];
 const GEMINI_3_1_RATIOS = ['1:1', '2:3', '3:2', '3:4', '4:3', '4:5', '5:4', '9:16', '16:9', '21:9', '1:4', '4:1', '1:8', '8:1'];
-const GPT1_RATIOS = ['1:1', '2:3', '3:2'];
 const GPT15_RATIOS = ['1:1', '2:3', '3:2'];
 const GROK_RATIOS = ['1:1', '2:3', '3:2', '9:16', '16:9'];
 const GROK_IMAGINE_RATIOS = ['1:1', '4:3', '9:16', '16:9'];
@@ -186,19 +185,19 @@ const MODELS: ModelDefinition[] = [
     supportedResolutions: ['1K', '2K']
   },
   {
-    id: 'gpt-image-1-all',
-    name: 'GPT Image 1',
-    cost: 'GPT',
-    features: ['stable'],
-    maxImages: 4,
-    supportedAspectRatios: GPT1_RATIOS,
-    supportedResolutions: ['AUTO']
-  },
-  {
     id: 'gpt-image-1.5-all',
     name: 'GPT Image 1.5',
     cost: 'GPT-1.5',
     features: ['detail'],
+    maxImages: 4,
+    supportedAspectRatios: GPT15_RATIOS,
+    supportedResolutions: ['AUTO']
+  },
+  {
+    id: 'gpt-image-2-all',
+    name: 'GPT Image 2',
+    cost: 'GPT-2',
+    features: ['heavy', 'detail'],
     maxImages: 4,
     supportedAspectRatios: GPT15_RATIOS,
     supportedResolutions: ['AUTO']
@@ -1231,8 +1230,8 @@ const PRICE_DATA = [
       { m: 'Gemini-3.1-Flash-Image', p: '1K/2K 0.116元/张，4K 0.207元/张' },
       { m: 'Gemini-3-Pro-Image', p: '1K/2K 0.231元/张，4K 0.414元/张' },
       { m: 'Kling Image O1', p: '0.238元/张' },
-      { m: 'GPT Image 1', p: '0.055元/张' },
       { m: 'GPT Image 1.5', p: '0.055元/张' },
+      { m: 'GPT Image 2', p: '0.084元/张' },
       { m: 'Grok 4 Image', p: '0.056元/张' },
       { m: 'Grok Imagine Image', p: '0.146元/张' },
       { m: 'Doubao Seedream 5.0', p: '0.154元/张' },
@@ -3376,22 +3375,60 @@ const App = () => {
                 });
                 const data = await res.json();
                 url = data.data?.[0]?.url || findImageUrlInObject(data) || '';
-            } else if (tModelId === 'grok-imagine-image' || tModelId === 'doubao-seedream-5-0-260128') {
+            } else if (tModelId === 'gpt-image-2-all' && tRefs && tRefs.length > 0) {
+                // MiniMax Image Edit logic
+                const formData = new FormData();
+                formData.append('model', tModelId);
+                formData.append('prompt', tPrompt);
+                formData.append('n', '1');
+                formData.append('size', tSize === 'AUTO' ? (tRatio === '3:2' ? '1536x1024' : tRatio === '2:3' ? '1024x1536' : '1024x1024') : tSize);
+                if (tTransparent) formData.append('background', 'transparent');
+                
+                // Assuming only the first image is used for standard edit if multiple are not supported as files
+                const img = tRefs[0];
+                let blob: Blob;
+                if (img.data.startsWith('http')) {
+                    const imgRes = await fetch(img.data);
+                    blob = await imgRes.blob();
+                } else {
+                    const b64 = img.data.includes(',') ? img.data.split(',')[1] : img.data;
+                    const byteCharacters = atob(b64);
+                    const byteNumbers = new Array(byteCharacters.length);
+                    for (let i = 0; i < byteCharacters.length; i++) byteNumbers[i] = byteCharacters.charCodeAt(i);
+                    blob = new Blob([new Uint8Array(byteNumbers)], { type: img.mimeType });
+                }
+                formData.append('image', blob, 'image.png');
+
+                const res = await fetch(`${config.baseUrl}/v1/images/edits`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${key}`, 'Accept': 'application/json' },
+                    body: formData
+                });
+                const data = await res.json();
+                url = data.data?.[0]?.url || findImageUrlInObject(data) || '';
+            } else if (tModelId === 'grok-imagine-image' || tModelId === 'doubao-seedream-5-0-260128' || tModelId === 'gpt-image-2-all') {
                 const bodyPayload: any = {
                     model: tModelId,
                     prompt: tPrompt,
-                    size: tSize
+                    n: 1,
+                    size: (tModelId === 'gpt-image-2-all' && tSize === 'AUTO') 
+                          ? (tRatio === '3:2' ? '1536x1024' : tRatio === '2:3' ? '1024x1536' : '1024x1024') 
+                          : (tSize === 'AUTO' ? undefined : tSize),
+                    response_format: 'url'
                 };
                 if (tModelId === 'doubao-seedream-5-0-260128') {
                     bodyPayload.aspect_ratio = tRatio;
                 }
-                if (tRefs && tRefs.length > 0) {
+                if (tModelId === 'gpt-image-2-all' && tTransparent) {
+                    bodyPayload.background = 'transparent';
+                }
+                if (tRefs && tRefs.length > 0 && tModelId !== 'gpt-image-2-all') {
                     const images = tRefs.map((img: ReferenceImage) => img.data.startsWith('http') ? img.data : `data:${img.mimeType};base64,${img.data}`);
                     bodyPayload.image = images.length === 1 ? images[0] : images;
                 }
                 const res = await fetch(`${config.baseUrl}/v1/images/generations`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}`, 'Accept': 'application/json' },
                     body: JSON.stringify(bodyPayload)
                 });
                 const data = await res.json();
@@ -3416,7 +3453,7 @@ const App = () => {
                     bodyPayload.resolution = tSize; 
                 }
                 
-                if ((tModelId === 'gpt-image-1-all' || tModelId === 'gpt-image-1.5-all') && tTransparent) {
+                if ((tModelId === 'gpt-image-1.5-all') && tTransparent) {
                     bodyPayload.transparency = 'alpha';
                 }
 
@@ -4388,7 +4425,7 @@ const App = () => {
 
                 <div className="space-y-1">
                   {/* Red Instruction Text for GPT Models */}
-                  {(!isVideoMode && !isAudioMode && (selectedModel === 'gpt-image-1-all' || selectedModel === 'gpt-image-1.5-all')) && (
+                  {(!isVideoMode && !isAudioMode && (selectedModel === 'gpt-image-1.5-all' || selectedModel === 'gpt-image-2-all')) && (
                       <div className="text-xs text-brand-red font-normal mb-1">
                           提示词输入透明背景可生成透明背景图片
                       </div>
