@@ -126,6 +126,8 @@ const ASPECT_RATIO_LABELS: Record<string, string> = {
   '5:4': '5:4 (装饰画)',
   '9:16': '9:16 (短视频)',
   '16:9': '16:9 (电脑壁纸)',
+  '2:1': '2:1 (全景)',
+  '1:2': '1:2 (对折)',
   '21:9': '21:9 (宽屏电影)',
   '9:21': '9:21 (垂直全景)',
   '32:9': '32:9 (超级宽屏)',
@@ -142,6 +144,24 @@ const ASPECT_RATIO_LABELS: Record<string, string> = {
 const EXTENDED_RATIOS = ['1:1', '2:3', '3:2', '3:4', '4:3', '4:5', '5:4', '9:16', '16:9', '21:9'];
 const GEMINI_3_1_RATIOS = ['1:1', '2:3', '3:2', '3:4', '4:3', '4:5', '5:4', '9:16', '16:9', '21:9', '1:4', '4:1', '1:8', '8:1'];
 const GPT15_RATIOS = ['1:1', '2:3', '3:2'];
+const GPT2_RATIOS = ['1:1', '16:9', '9:16', '4:3', '3:4', '3:2', '2:3', '5:4', '4:5', '2:1', '1:2', '21:9', '9:21'];
+
+const GPT2_SIZES: Record<string, Record<string, string>> = {
+  "1:1": { "1K": "1024x1024", "2K": "2048x2048", "4K": "2880x2880" },
+  "16:9": { "1K": "1280x720", "2K": "2048x1152", "4K": "3840x2160" },
+  "9:16": { "1K": "720x1280", "2K": "1152x2048", "4K": "2160x3840" },
+  "4:3": { "1K": "1152x864", "2K": "2048x1536", "4K": "3200x2400" },
+  "3:4": { "1K": "864x1152", "2K": "1536x2048", "4K": "2400x3200" },
+  "3:2": { "1K": "1536x1024", "2K": "2304x1536", "4K": "3456x2304" },
+  "2:3": { "1K": "1024x1536", "2K": "1536x2304", "4K": "2304x3456" },
+  "5:4": { "1K": "1280x1024", "2K": "2080x1664", "4K": "3200x2560" },
+  "4:5": { "1K": "1024x1280", "2K": "1664x2080", "4K": "2560x3200" },
+  "2:1": { "1K": "1536x768", "2K": "2560x1280", "4K": "3840x1920" },
+  "1:2": { "1K": "768x1536", "2K": "1280x2560", "4K": "1920x3840" },
+  "21:9": { "1K": "1680x720", "2K": "2688x1152", "4K": "3840x1648" },
+  "9:21": { "1K": "720x1680", "2K": "1152x2688", "4K": "1648x3840" }
+};
+
 const GROK_RATIOS = ['1:1', '2:3', '3:2', '9:16', '16:9'];
 const GROK_IMAGINE_RATIOS = ['1:1', '4:3', '9:16', '16:9'];
 const KLING_O1_RATIOS = ['1:1', '2:3', '3:2', '3:4', '4:3', '9:16', '16:9', '21:9'];
@@ -194,8 +214,17 @@ const MODELS: ModelDefinition[] = [
     supportedResolutions: ['AUTO']
   },
   {
+    id: 'gpt-image-2',
+    name: 'GPT IMAGE 2',
+    cost: 'GPT-2-NEW',
+    features: ['detail', 'high-quality'],
+    maxImages: 4,
+    supportedAspectRatios: GPT2_RATIOS,
+    supportedResolutions: ['AUTO', '1K', '2K', '4K']
+  },
+  {
     id: 'gpt-image-2-all',
-    name: 'GPT Image 2',
+    name: 'GPT Image 2 ALL',
     cost: 'GPT-2',
     features: ['heavy', 'detail'],
     maxImages: 4,
@@ -1231,7 +1260,8 @@ const PRICE_DATA = [
       { m: 'Gemini-3-Pro-Image', p: '1K/2K 0.231元/张，4K 0.414元/张' },
       { m: 'Kling Image O1', p: '0.238元/张' },
       { m: 'GPT Image 1.5', p: '0.055元/张' },
-      { m: 'GPT Image 2', p: '0.084元/张' },
+      { m: 'GPT IMAGE 2', p: '提示3.500元/1M tokens    补全21.000元/1M tokens' },
+      { m: 'GPT Image 2 ALL', p: '0.084元/张' },
       { m: 'Grok 4 Image', p: '0.056元/张' },
       { m: 'Grok Imagine Image', p: '0.146元/张' },
       { m: 'Doubao Seedream 5.0', p: '0.154元/张' },
@@ -1566,6 +1596,12 @@ const App = () => {
   const [draggedResourceIdx, setDraggedResourceIdx] = useState<number | null>(null);
 
   const galleryRef = useRef<HTMLDivElement>(null);
+
+  const scrollToGallery = () => {
+    if (window.innerWidth < 768 && galleryRef.current) {
+        galleryRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
   const configRef = useRef(config);
 
   const safeEnvKey = (typeof process !== 'undefined' && process.env && process.env.API_KEY) ? process.env.API_KEY : '';
@@ -2784,6 +2820,7 @@ const App = () => {
 
     setGeneratedAssets(prev => [placeholder, ...prev]);
     setError(null);
+    scrollToGallery();
 
     try {
         const generationConfig: any = {
@@ -2928,8 +2965,8 @@ const App = () => {
       });
     }
     setGeneratedAssets(prev => [...placeholders, ...prev]);
-
     setError(null);
+    scrollToGallery();
     try {
         const createOne = async (pId: string) => {
             let response;
@@ -3266,6 +3303,7 @@ const App = () => {
     }
     setGeneratedAssets(prev => [...placeholders, ...prev]);
     setError(null);
+    scrollToGallery();
 
     // Specific handling for Kling Omni Image (Async)
     if (tModelId === 'kling-image-o1') {
@@ -3375,15 +3413,23 @@ const App = () => {
                 });
                 const data = await res.json();
                 url = data.data?.[0]?.url || findImageUrlInObject(data) || '';
-            } else if (tModelId === 'gpt-image-2-all' && tRefs && tRefs.length > 0) {
+            } else if ((tModelId === 'gpt-image-2-all' || tModelId === 'gpt-image-2') && tRefs && tRefs.length > 0) {
                 // MiniMax Image Edit logic
                 const formData = new FormData();
                 formData.append('model', tModelId);
                 formData.append('prompt', tPrompt);
                 formData.append('n', '1');
-                formData.append('size', tSize === 'AUTO' ? (tRatio === '3:2' ? '1536x1024' : tRatio === '2:3' ? '1024x1536' : '1024x1024') : tSize);
-                if (tTransparent) formData.append('background', 'transparent');
                 
+                if (tModelId === 'gpt-image-2') {
+                    const qualityMapping: Record<string, string> = { '1K': 'low', '2K': 'medium', '4K': 'high' };
+                    const targetQuality = qualityMapping[tSize] || 'auto';
+                    const targetSize = tSize === 'AUTO' ? 'auto' : (GPT2_SIZES[tRatio]?.[tSize] || '1024x1024');
+                    formData.append('quality', targetQuality);
+                    formData.append('size', targetSize);
+                } else {
+                    formData.append('size', tSize === 'AUTO' ? (tRatio === '3:2' ? '1536x1024' : tRatio === '2:3' ? '1024x1536' : '1024x1024') : tSize);
+                }
+
                 // Assuming only the first image is used for standard edit if multiple are not supported as files
                 const img = tRefs[0];
                 let blob: Blob;
@@ -3405,7 +3451,42 @@ const App = () => {
                     body: formData
                 });
                 const data = await res.json();
-                url = data.data?.[0]?.url || findImageUrlInObject(data) || '';
+                let b64 = data.data?.[0]?.b64_json;
+                if (b64) {
+                    url = b64.startsWith('data:') ? b64 : `data:image/png;base64,${b64}`;
+                } else {
+                    url = data.data?.[0]?.url || findImageUrlInObject(data) || '';
+                }
+            } else if (tModelId === 'gpt-image-2') {
+                const qualityMapping: Record<string, string> = { '1K': 'low', '2K': 'medium', '4K': 'high' };
+                const targetQuality = qualityMapping[tSize] || 'auto';
+                const targetSize = tSize === 'AUTO' ? (GPT2_SIZES[tRatio]?.['1K'] || 'auto') : (GPT2_SIZES[tRatio]?.[tSize] || '1024x1024');
+
+                const bodyPayload: any = {
+                    model: tModelId,
+                    prompt: tPrompt,
+                    n: 1,
+                    quality: targetQuality,
+                    size: targetSize
+                };
+                
+                // removed tRefs logic here because it's handled by the /edits block above if tRefs exists
+                const res = await fetch(`${config.baseUrl}/v1/images/generations`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}`, 'Accept': 'application/json' },
+                    body: JSON.stringify(bodyPayload)
+                });
+                const data = await res.json();
+                if (!res.ok || data.error) {
+                    throw new Error(`GPT-2 API Error: ${data.error?.message || JSON.stringify(data.error) || JSON.stringify(data)}`);
+                }
+                
+                let b64 = data.data?.[0]?.b64_json;
+                if (b64) {
+                    url = b64.startsWith('data:') ? b64 : `data:image/png;base64,${b64}`;
+                } else {
+                    url = data.data?.[0]?.url || findImageUrlInObject(data) || '';
+                }
             } else if (tModelId === 'grok-imagine-image' || tModelId === 'doubao-seedream-5-0-260128' || tModelId === 'gpt-image-2-all') {
                 const bodyPayload: any = {
                     model: tModelId,
@@ -3419,9 +3500,6 @@ const App = () => {
                 if (tModelId === 'doubao-seedream-5-0-260128') {
                     bodyPayload.aspect_ratio = tRatio;
                 }
-                if (tModelId === 'gpt-image-2-all' && tTransparent) {
-                    bodyPayload.background = 'transparent';
-                }
                 if (tRefs && tRefs.length > 0 && tModelId !== 'gpt-image-2-all') {
                     const images = tRefs.map((img: ReferenceImage) => img.data.startsWith('http') ? img.data : `data:${img.mimeType};base64,${img.data}`);
                     bodyPayload.image = images.length === 1 ? images[0] : images;
@@ -3432,6 +3510,9 @@ const App = () => {
                     body: JSON.stringify(bodyPayload)
                 });
                 const data = await res.json();
+                if (!res.ok || data.error) {
+                    throw new Error(`API Error (${tModelId}): ${data.error?.message || JSON.stringify(data.error) || JSON.stringify(data)}`);
+                }
                 url = data.data?.[0]?.url || findImageUrlInObject(data) || '';
             } else {
                 const promptText = `${tPrompt} --aspect-ratio ${tRatio}`;
@@ -3763,9 +3844,9 @@ const App = () => {
            </div>
         </header>
 
-        <div className="flex-1 flex flex-row min-h-0 overflow-hidden">
+        <div className="flex-1 flex flex-col md:flex-row min-h-0 overflow-y-auto md:overflow-hidden">
            {/* Sidebar */}
-           <div className={`bg-white flex flex-col z-20 brutalist-shadow transition-all duration-300 ${isFullWidthMode ? 'flex-1 w-full border-r-0' : (isSidebarOpen ? 'w-full md:w-[450px] border-r-2 border-black' : 'w-0 md:w-0 overflow-hidden border-r-0 opacity-0')}`}>
+           <div className={`bg-white flex flex-col z-20 brutalist-shadow transition-all duration-300 shrink-0 ${isFullWidthMode ? 'flex-1 w-full border-r-0' : (isSidebarOpen ? 'w-full md:w-[450px] border-r-2 border-black min-h-[600px] md:min-h-0' : 'w-0 md:w-0 overflow-hidden border-r-0 opacity-0')}`}>
              {/* Sidebar Content */}
              {/* Conditionally render content based on mainCategory */}
              {mainCategory === 'chat' ? (
@@ -4425,7 +4506,7 @@ const App = () => {
 
                 <div className="space-y-1">
                   {/* Red Instruction Text for GPT Models */}
-                  {(!isVideoMode && !isAudioMode && (selectedModel === 'gpt-image-1.5-all' || selectedModel === 'gpt-image-2-all')) && (
+                  {(!isVideoMode && !isAudioMode && selectedModel === 'gpt-image-1.5-all') && (
                       <div className="text-xs text-brand-red font-normal mb-1">
                           提示词输入透明背景可生成透明背景图片
                       </div>
@@ -4437,28 +4518,25 @@ const App = () => {
                   
                   {/* Updated Toolbar matching the provided image style */}
                   {!isAudioMode && (
-                  <div className="flex flex-wrap gap-2 mb-2">
-                    <button onClick={optimizePrompt} disabled={isOptimizing} className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-brand-yellow text-black border border-black font-normal text-xs brutalist-shadow-sm hover:translate-y-0.5 hover:shadow-none transition-all uppercase whitespace-nowrap">
-                      {isOptimizing ? <Loader2 className="w-3.5 h-3.5 animate-spin"/> : <><Wand2 className="w-3.5 h-3.5"/> AI</>}
+                  <div className="flex flex-row gap-1.5 mb-2 overflow-x-auto no-scrollbar">
+                    <button onClick={optimizePrompt} disabled={isOptimizing} className="flex-1 flex items-center justify-center py-2 bg-white text-black border border-black brutalist-shadow-sm hover:bg-brand-yellow hover:translate-y-0.5 hover:shadow-none transition-all min-w-0" title="AI优化">
+                      {isOptimizing ? <Loader2 className="w-4 h-4 animate-spin"/> : <Wand2 className="w-4 h-4"/>}
                     </button>
-                    <button onClick={() => { setTempSelectedStyles([]); setActiveModal('styles'); }} className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-brand-blue text-white border border-black font-normal text-xs brutalist-shadow-sm hover:translate-y-0.5 hover:shadow-none transition-all uppercase whitespace-nowrap">
-                        <Palette className="w-3.5 h-3.5"/> 风格镜头
+                    <button onClick={() => { setTempSelectedStyles([]); setActiveModal('styles'); }} className="flex-1 flex items-center justify-center py-2 bg-white text-black border border-black brutalist-shadow-sm hover:bg-brand-yellow hover:translate-y-0.5 hover:shadow-none transition-all min-w-0" title="风格镜头">
+                        <Palette className="w-4 h-4"/>
                     </button>
-                    <button onClick={() => setActiveModal('library')} className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-brand-purple text-white border border-black font-normal text-xs brutalist-shadow-sm hover:translate-y-0.5 hover:shadow-none transition-all uppercase whitespace-nowrap">
-                      <Bookmark className="w-3.5 h-3.5"/> 词库
+                    <button onClick={() => setActiveModal('library')} className="flex-1 flex items-center justify-center py-2 bg-white text-black border border-black brutalist-shadow-sm hover:bg-brand-yellow hover:translate-y-0.5 hover:shadow-none transition-all min-w-0" title="词库">
+                      <Bookmark className="w-4 h-4"/>
                     </button>
-                    
-                    <div className="flex gap-2 ml-auto">
-                      <button onClick={handleOpenSaveModal} disabled={!prompt.trim()} className="w-9 h-9 flex items-center justify-center bg-brand-pink text-white border border-black font-normal text-xs brutalist-shadow-sm hover:translate-y-0.5 hover:shadow-none transition-all disabled:opacity-50 disabled:grayscale disabled:hover:translate-y-0 disabled:hover:shadow-sm" title="保存">
-                        <Save className="w-4 h-4"/>
-                      </button>
-                      <button onClick={() => setActiveModal('edit-prompt')} className="w-9 h-9 flex items-center justify-center bg-brand-green text-black border border-black font-normal text-xs brutalist-shadow-sm hover:translate-y-0.5 hover:shadow-none transition-all" title="展开">
-                        <Maximize2 className="w-4 h-4"/>
-                      </button>
-                      <button onClick={() => { setPrompt(''); setDialogueLines([]); }} className="w-9 h-9 flex items-center justify-center bg-white text-black border border-black font-normal text-xs brutalist-shadow-sm hover:bg-brand-red hover:text-white hover:translate-y-0.5 hover:shadow-none transition-all" title="清空">
-                        <Trash2 className="w-4 h-4"/>
-                      </button>
-                    </div>
+                    <button onClick={handleOpenSaveModal} disabled={!prompt.trim()} className="flex-1 flex items-center justify-center py-2 bg-white text-black border border-black brutalist-shadow-sm hover:bg-brand-yellow hover:translate-y-0.5 hover:shadow-none transition-all disabled:opacity-50 disabled:grayscale disabled:hover:translate-y-0 min-w-0" title="保存">
+                      <Save className="w-4 h-4"/>
+                    </button>
+                    <button onClick={() => setActiveModal('edit-prompt')} className="flex-1 flex items-center justify-center py-2 bg-white text-black border border-black brutalist-shadow-sm hover:bg-brand-yellow hover:translate-y-0.5 hover:shadow-none transition-all min-w-0" title="展开">
+                      <Maximize2 className="w-4 h-4"/>
+                    </button>
+                    <button onClick={() => { setPrompt(''); setDialogueLines([]); }} className="flex-1 flex items-center justify-center py-2 bg-white text-black border border-black brutalist-shadow-sm hover:bg-brand-red hover:text-white hover:translate-y-0.5 hover:shadow-none transition-all min-w-0" title="清空">
+                      <Trash2 className="w-4 h-4"/>
+                    </button>
                   </div>
                   )}
 
@@ -4592,7 +4670,7 @@ const App = () => {
 
       {/* Gallery */}
       {!isFullWidthMode && (
-      <div ref={galleryRef} className="flex-1 flex flex-col relative h-full overflow-hidden select-none" onMouseDown={handleContainerMouseDown}>
+      <div ref={galleryRef} className="flex-1 flex flex-col relative min-h-[500px] md:h-full md:overflow-hidden select-none" onMouseDown={handleContainerMouseDown}>
         <div className="py-2 px-6 flex items-center shrink-0 overflow-hidden gap-4">
            <div className="flex items-center gap-2">
              <button onClick={handleSelectAll} className="flex-shrink-0 flex items-center gap-2 border border-black px-3 py-1.5 text-xs font-normal brutalist-shadow-sm hover:translate-y-0.5 hover:shadow-none transition-all bg-white uppercase">
@@ -4788,9 +4866,11 @@ const App = () => {
             ))}
 
             {generatedAssets.length === 0 && (
-              <div className="col-span-full h-[400px] border-2 border-dashed border-slate-300 flex flex-col items-center justify-center">
-                <Bot className="w-32 h-32 opacity-10 mb-4" />
-                <span className="font-normal text-4xl uppercase tracking-tighter opacity-10 italic">READY FOR ADVENTURE</span>
+              <div className="col-span-full h-[300px] md:h-[400px] border-2 border-dashed border-slate-300 flex flex-col items-center justify-center p-4">
+                <Bot className="w-24 h-24 md:w-32 md:h-32 opacity-10 mb-4" />
+                <span className="font-normal text-2xl md:text-4xl uppercase tracking-tighter opacity-10 italic text-center px-4 leading-none">
+                  READY FOR ADVENTURE
+                </span>
               </div>
             )}
           </div>
