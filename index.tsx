@@ -87,6 +87,7 @@ interface ModelDefinition {
   maxReferenceImages?: number;
   supportedAspectRatios: string[];
   supportedResolutions: string[];
+  supportedQualities?: string[];
 }
 
 interface SavedPrompt {
@@ -147,19 +148,19 @@ const GPT15_RATIOS = ['1:1', '2:3', '3:2'];
 const GPT2_RATIOS = ['1:1', '16:9', '9:16', '4:3', '3:4', '3:2', '2:3', '5:4', '4:5', '2:1', '1:2', '21:9', '9:21'];
 
 const GPT2_SIZES: Record<string, Record<string, string>> = {
-  "1:1": { "1K": "1024x1024", "2K": "2048x2048", "4K": "2880x2880" },
-  "16:9": { "1K": "1280x720", "2K": "2048x1152", "4K": "3840x2160" },
-  "9:16": { "1K": "720x1280", "2K": "1152x2048", "4K": "2160x3840" },
-  "4:3": { "1K": "1152x864", "2K": "2048x1536", "4K": "3200x2400" },
-  "3:4": { "1K": "864x1152", "2K": "1536x2048", "4K": "2400x3200" },
-  "3:2": { "1K": "1536x1024", "2K": "2304x1536", "4K": "3456x2304" },
-  "2:3": { "1K": "1024x1536", "2K": "1536x2304", "4K": "2304x3456" },
-  "5:4": { "1K": "1280x1024", "2K": "2080x1664", "4K": "3200x2560" },
-  "4:5": { "1K": "1024x1280", "2K": "1664x2080", "4K": "2560x3200" },
-  "2:1": { "1K": "1536x768", "2K": "2560x1280", "4K": "3840x1920" },
-  "1:2": { "1K": "768x1536", "2K": "1280x2560", "4K": "1920x3840" },
-  "21:9": { "1K": "1680x720", "2K": "2688x1152", "4K": "3840x1648" },
-  "9:21": { "1K": "720x1680", "2K": "1152x2688", "4K": "1648x3840" }
+  "1:1": { "1K": "1024x1024", "2K": "2048x2048" },
+  "16:9": { "1K": "1536x864", "2K": "2048x1152", "4K": "3840x2160" },
+  "9:16": { "1K": "864x1536", "2K": "1152x2048", "4K": "2160x3840" },
+  "4:3": { "1K": "1024x768", "2K": "2048x1536" },
+  "3:4": { "1K": "768x1024", "2K": "1536x2048" },
+  "3:2": { "1K": "1536x1024", "2K": "2048x1360" },
+  "2:3": { "1K": "1024x1536", "2K": "1360x2048" },
+  "5:4": { "1K": "1280x1024", "2K": "2560x2048" },
+  "4:5": { "1K": "1024x1280", "2K": "2048x2560" },
+  "2:1": { "1K": "2048x1024", "2K": "2688x1344", "4K": "3840x1920" },
+  "1:2": { "1K": "1024x2048", "2K": "1344x2688", "4K": "1920x3840" },
+  "21:9": { "1K": "2016x864", "2K": "2688x1152", "4K": "3840x1648" },
+  "9:21": { "1K": "864x2016", "2K": "1152x2688", "4K": "1648x3840" }
 };
 
 const GROK_RATIOS = ['1:1', '2:3', '3:2', '9:16', '16:9'];
@@ -215,12 +216,13 @@ const MODELS: ModelDefinition[] = [
   },
   {
     id: 'gpt-image-2',
-    name: 'GPT IMAGE 2',
+    name: 'GPT IMAGE 2(推荐使用)',
     cost: 'GPT-2-NEW',
     features: ['detail', 'high-quality'],
     maxImages: 4,
     supportedAspectRatios: GPT2_RATIOS,
-    supportedResolutions: ['AUTO', '1K', '2K', '4K']
+    supportedResolutions: ['1K', '2K', '4K'],
+    supportedQualities: ['auto', 'low', 'medium', 'high']
   },
   {
     id: 'gpt-image-2-all',
@@ -228,8 +230,8 @@ const MODELS: ModelDefinition[] = [
     cost: 'GPT-2',
     features: ['heavy', 'detail'],
     maxImages: 4,
-    supportedAspectRatios: GPT15_RATIOS,
-    supportedResolutions: ['AUTO']
+    supportedAspectRatios: GPT2_RATIOS,
+    supportedResolutions: ['1K', '2K', '4K']
   },
   {
     id: 'grok-4-image',
@@ -1260,7 +1262,7 @@ const PRICE_DATA = [
       { m: 'Gemini-3-Pro-Image', p: '1K/2K 0.231元/张，4K 0.414元/张' },
       { m: 'Kling Image O1', p: '0.238元/张' },
       { m: 'GPT Image 1.5', p: '0.055元/张' },
-      { m: 'GPT IMAGE 2', p: '提示3.500元/1M tokens    补全21.000元/1M tokens' },
+      { m: 'GPT IMAGE 2(推荐使用)', p: '提示3.500元/1M tokens    补全21.000元/1M tokens' },
       { m: 'GPT Image 2 ALL', p: '0.084元/张' },
       { m: 'Grok 4 Image', p: '0.056元/张' },
       { m: 'Grok Imagine Image', p: '0.146元/张' },
@@ -1553,6 +1555,7 @@ const App = () => {
   const [referenceVideos, setReferenceVideos] = useState<ReferenceImage[]>([]);
   const [referenceAudios, setReferenceAudios] = useState<ReferenceAudio[]>([]);
   const [imageSize, setImageSize] = useState('AUTO');
+  const [imageQuality, setImageQuality] = useState('auto');
   const [aspectRatio, setAspectRatio] = useState('1:1');
   const [generationCount, setGenerationCount] = useState(1);
   const [isOptimizing, setIsOptimizing] = useState(false);
@@ -1757,7 +1760,18 @@ const App = () => {
       const model = MODELS.find(m => m.id === selectedModel);
       if (model) {
         if (!model.supportedAspectRatios.includes(aspectRatio)) setAspectRatio(model.supportedAspectRatios[0]);
-        if (!model.supportedResolutions.includes(imageSize)) setImageSize(model.supportedResolutions[0]);
+
+        let allowedResolutions = model.supportedResolutions;
+        if (model.id === 'gpt-image-2' || model.id === 'gpt-image-2-all') {
+             const sizesForRatio = GPT2_SIZES[aspectRatio] || {};
+             allowedResolutions = allowedResolutions.filter(res => sizesForRatio[res]);
+        }
+        
+        if (!allowedResolutions.includes(imageSize) && allowedResolutions.length > 0) {
+            setImageSize(allowedResolutions[0]);
+        }
+
+        if (model.supportedQualities && !model.supportedQualities.includes(imageQuality)) setImageQuality(model.supportedQualities[0]);
       }
     } else if (isVideoMode) {
       const model = VIDEO_MODELS.find(m => m.id === selectedVideoModel);
@@ -3252,6 +3266,7 @@ const App = () => {
     const tModelId = overrideConfig?.modelId ?? selectedModel;
     const tRatio = overrideConfig?.aspectRatio ?? aspectRatio;
     let tSize = overrideConfig?.imageSize ?? imageSize;
+    const tQuality = overrideConfig?.imageQuality ?? imageQuality;
     
     if (tModelId === 'grok-4-image') {
         if (tRatio === '1:1') tSize = '1080x1080';
@@ -3298,7 +3313,7 @@ const App = () => {
             modelId: tModelId, modelName: MODELS.find(m => m.id === tModelId)?.name || tModelId,
             durationText: tSize, genTimeLabel: '生成中...',
             timestamp: startTime, status: 'loading',
-            config: { modelId: tModelId, aspectRatio: tRatio, imageSize: tSize, prompt: tPrompt, referenceImages: tRefs ? [...tRefs] : [], type: 'image', isTransparent: tTransparent }
+            config: { modelId: tModelId, aspectRatio: tRatio, imageSize: tSize, imageQuality: tQuality, prompt: tPrompt, referenceImages: tRefs ? [...tRefs] : [], type: 'image', isTransparent: tTransparent }
         });
     }
     setGeneratedAssets(prev => [...placeholders, ...prev]);
@@ -3429,15 +3444,21 @@ const App = () => {
                 formData.append('prompt', tPrompt);
                 formData.append('n', '1');
                 
-                if (tModelId === 'gpt-image-2') {
-                    const qualityMapping: Record<string, string> = { '1K': 'low', '2K': 'medium', '4K': 'high' };
-                    const targetQuality = qualityMapping[tSize] || 'auto';
-                    const targetSize = tSize === 'AUTO' ? 'auto' : (GPT2_SIZES[tRatio]?.[tSize] || '1024x1024');
-                    formData.append('quality', targetQuality);
+                if (tModelId === 'gpt-image-2' || tModelId === 'gpt-image-2-all') {
+                    const targetSize = tSize === 'AUTO' ? (GPT2_SIZES[tRatio]?.['1K'] || '1024x1024') : (GPT2_SIZES[tRatio]?.[tSize] || GPT2_SIZES[tRatio]?.['2K'] || GPT2_SIZES[tRatio]?.['1K'] || '1024x1024');
                     formData.append('size', targetSize);
+                    if (tModelId === 'gpt-image-2') {
+                        const targetQuality = tQuality || 'auto';
+                        formData.append('quality', targetQuality);
+                    }
                 } else {
                     formData.append('size', tSize === 'AUTO' ? (tRatio === '3:2' ? '1536x1024' : tRatio === '2:3' ? '1024x1536' : '1024x1024') : tSize);
                 }
+                
+                // Add moderation parameter if supported
+                formData.append('safety_level', 'low');
+                formData.append('safety_setting', 'low');
+                formData.append('moderation', 'low');
 
                 // Assuming only the first image is used for standard edit if multiple are not supported as files
                 const img = tRefs[0];
@@ -3470,16 +3491,18 @@ const App = () => {
                     url = data.data?.[0]?.url || findImageUrlInObject(data) || '';
                 }
             } else if (tModelId === 'gpt-image-2') {
-                const qualityMapping: Record<string, string> = { '1K': 'low', '2K': 'medium', '4K': 'high' };
-                const targetQuality = qualityMapping[tSize] || 'auto';
-                const targetSize = tSize === 'AUTO' ? (GPT2_SIZES[tRatio]?.['1K'] || 'auto') : (GPT2_SIZES[tRatio]?.[tSize] || '1024x1024');
+                const targetQuality = tQuality || 'auto';
+                const targetSize = tSize === 'AUTO' ? (GPT2_SIZES[tRatio]?.['1K'] || '1024x1024') : (GPT2_SIZES[tRatio]?.[tSize] || GPT2_SIZES[tRatio]?.['2K'] || GPT2_SIZES[tRatio]?.['1K'] || '1024x1024');
 
                 const bodyPayload: any = {
                     model: tModelId,
                     prompt: tPrompt,
                     n: 1,
                     quality: targetQuality,
-                    size: targetSize
+                    size: targetSize,
+                    safety_level: 'low',
+                    safety_setting: 'low',
+                    moderation: 'low'
                 };
                 
                 // removed tRefs logic here because it's handled by the /edits block above if tRefs exists
@@ -3504,10 +3527,13 @@ const App = () => {
                     model: tModelId,
                     prompt: tPrompt,
                     n: 1,
-                    size: (tModelId === 'gpt-image-2-all' && tSize === 'AUTO') 
-                          ? (tRatio === '3:2' ? '1536x1024' : tRatio === '2:3' ? '1024x1536' : '1024x1024') 
+                    size: tModelId === 'gpt-image-2-all'
+                          ? (tSize === 'AUTO' ? (GPT2_SIZES[tRatio]?.['1K'] || '1024x1024') : (GPT2_SIZES[tRatio]?.[tSize] || GPT2_SIZES[tRatio]?.['2K'] || GPT2_SIZES[tRatio]?.['1K'] || '1024x1024'))
                           : (tSize === 'AUTO' ? undefined : tSize),
-                    response_format: 'url'
+                    response_format: 'url',
+                    safety_level: 'low',
+                    safety_setting: 'low',
+                    moderation: 'low'
                 };
                 if (tModelId === 'doubao-seedream-5-0-260128') {
                     bodyPayload.aspect_ratio = tRatio;
@@ -3696,6 +3722,7 @@ const App = () => {
            setSelectedModel(asset.config.modelId);
            setAspectRatio(asset.config.aspectRatio);
            setImageSize(asset.config.imageSize);
+           if (asset.config.imageQuality) setImageQuality(asset.config.imageQuality);
            setIsTransparent(asset.config.isTransparent || false);
            executeGeneration(asset.config);
         } else if (asset.type === 'audio') {
@@ -4424,7 +4451,7 @@ const App = () => {
                 )}
 
                 {!isVideoMode && !isAudioMode && (
-                    <div className="grid grid-cols-2 gap-2.5">
+                    <div className={`grid ${currentImageModel?.supportedQualities ? 'grid-cols-3' : 'grid-cols-2'} gap-2.5`}>
                         <div className="space-y-1">
                             <label className={labelClass}>比例 ASPECT</label>
                             <select value={aspectRatio} onChange={(e) => setAspectRatio(e.target.value)} className={selectClass}>
@@ -4432,13 +4459,32 @@ const App = () => {
                             </select>
                         </div>
                         <div className="space-y-1">
-                            <label className={labelClass}>质量 QUALITY</label>
+                            <label className={labelClass}>{currentImageModel?.supportedQualities || currentImageModel?.id === 'gpt-image-2-all' ? '分辨率 SIZE' : '质量 QUALITY'}</label>
                             <select value={imageSize} onChange={(e) => setImageSize(e.target.value)} className={selectClass}>
-                                {currentImageModel?.supportedResolutions.map((res, idx) => (
-                                    <option key={idx} value={res}>{res}</option>
-                                ))}
+                                {(() => {
+                                    const resolutions = currentImageModel?.supportedResolutions || [];
+                                    if (currentImageModel?.id === 'gpt-image-2' || currentImageModel?.id === 'gpt-image-2-all') {
+                                        const sizesForRatio = GPT2_SIZES[aspectRatio] || {};
+                                        return resolutions.map((res, idx) => (
+                                            <option key={idx} value={res} disabled={!sizesForRatio[res]}>
+                                                {res}{!sizesForRatio[res] ? ' (该比例不支持)' : ''}
+                                            </option>
+                                        ));
+                                    }
+                                    return resolutions.map((res, idx) => (
+                                        <option key={idx} value={res}>{res}</option>
+                                    ));
+                                })()}
                             </select>
                         </div>
+                        {currentImageModel?.supportedQualities && (
+                            <div className="space-y-1">
+                                <label className={labelClass}>画质 QUALITY</label>
+                                <select value={imageQuality} onChange={(e) => setImageQuality(e.target.value)} className={selectClass}>
+                                    {currentImageModel.supportedQualities.map(q => <option key={q} value={q}>{({ 'auto': 'AUTO 自动', 'low': 'LOW 省钱', 'medium': 'MEDIUM 平衡', 'high': 'HIGH 最强' } as Record<string, string>)[q] || q.toUpperCase()}</option>)}
+                                </select>
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -4534,22 +4580,22 @@ const App = () => {
                   {/* Updated Toolbar matching the provided image style */}
                   {!isAudioMode && (
                   <div className="flex flex-row gap-1.5 mb-2 overflow-x-auto no-scrollbar">
-                    <button onClick={optimizePrompt} disabled={isOptimizing} className="flex-1 flex items-center justify-center py-2 bg-white text-black border border-black brutalist-shadow-sm hover:bg-brand-yellow hover:translate-y-0.5 hover:shadow-none transition-all min-w-0" title="AI优化">
+                    <button onClick={optimizePrompt} disabled={isOptimizing} className="flex-1 flex items-center justify-center py-2 bg-white text-black border border-black brutalist-shadow-sm hover:bg-brand-yellow transition-all min-w-0" title="AI优化">
                       {isOptimizing ? <Loader2 className="w-4 h-4 animate-spin"/> : <Wand2 className="w-4 h-4"/>}
                     </button>
-                    <button onClick={() => { setTempSelectedStyles([]); setActiveModal('styles'); }} className="flex-1 flex items-center justify-center py-2 bg-white text-black border border-black brutalist-shadow-sm hover:bg-brand-yellow hover:translate-y-0.5 hover:shadow-none transition-all min-w-0" title="风格镜头">
+                    <button onClick={() => { setTempSelectedStyles([]); setActiveModal('styles'); }} className="flex-1 flex items-center justify-center py-2 bg-white text-black border border-black brutalist-shadow-sm hover:bg-brand-yellow transition-all min-w-0" title="风格镜头">
                         <Palette className="w-4 h-4"/>
                     </button>
-                    <button onClick={() => setActiveModal('library')} className="flex-1 flex items-center justify-center py-2 bg-white text-black border border-black brutalist-shadow-sm hover:bg-brand-yellow hover:translate-y-0.5 hover:shadow-none transition-all min-w-0" title="词库">
+                    <button onClick={() => setActiveModal('library')} className="flex-1 flex items-center justify-center py-2 bg-white text-black border border-black brutalist-shadow-sm hover:bg-brand-yellow transition-all min-w-0" title="词库">
                       <Bookmark className="w-4 h-4"/>
                     </button>
-                    <button onClick={handleOpenSaveModal} disabled={!prompt.trim()} className="flex-1 flex items-center justify-center py-2 bg-white text-black border border-black brutalist-shadow-sm hover:bg-brand-yellow hover:translate-y-0.5 hover:shadow-none transition-all disabled:opacity-50 disabled:grayscale disabled:hover:translate-y-0 min-w-0" title="保存">
+                    <button onClick={handleOpenSaveModal} disabled={!prompt.trim()} className="flex-1 flex items-center justify-center py-2 bg-white text-black border border-black brutalist-shadow-sm hover:bg-brand-yellow transition-all disabled:opacity-50 disabled:grayscale min-w-0" title="保存">
                       <Save className="w-4 h-4"/>
                     </button>
-                    <button onClick={() => setActiveModal('edit-prompt')} className="flex-1 flex items-center justify-center py-2 bg-white text-black border border-black brutalist-shadow-sm hover:bg-brand-yellow hover:translate-y-0.5 hover:shadow-none transition-all min-w-0" title="展开">
+                    <button onClick={() => setActiveModal('edit-prompt')} className="flex-1 flex items-center justify-center py-2 bg-white text-black border border-black brutalist-shadow-sm hover:bg-brand-yellow transition-all min-w-0" title="展开">
                       <Maximize2 className="w-4 h-4"/>
                     </button>
-                    <button onClick={() => { setPrompt(''); setDialogueLines([]); }} className="flex-1 flex items-center justify-center py-2 bg-white text-black border border-black brutalist-shadow-sm hover:bg-brand-red hover:text-white hover:translate-y-0.5 hover:shadow-none transition-all min-w-0" title="清空">
+                    <button onClick={() => { setPrompt(''); setDialogueLines([]); }} className="flex-1 flex items-center justify-center py-2 bg-white text-black border border-black brutalist-shadow-sm hover:bg-brand-red hover:text-white transition-all min-w-0" title="清空">
                       <Trash2 className="w-4 h-4"/>
                     </button>
                   </div>
@@ -4830,6 +4876,7 @@ const App = () => {
                             setPrompt(asset.prompt);
                             if (asset.config?.aspectRatio) setAspectRatio(asset.config.aspectRatio);
                             if (asset.config?.imageSize) setImageSize(asset.config.imageSize);
+                            if (asset.config?.imageQuality) setImageQuality(asset.config.imageQuality);
                           } else if (asset.type === 'video') {
                             setMainCategory('video');
                             setSelectedVideoModel(asset.modelId);
