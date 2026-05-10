@@ -2973,13 +2973,44 @@ const App = () => {
                 const isHappyHorseModel = apiModelId.startsWith('happyhorse');
 
                 if (isHappyHorseModel) {
+                    let actualModelId = 'happyhorse-1.0';
+                    if (apiModelId === 'happyhorse-1.0') {
+                        if (tRefVideos && tRefVideos.length > 0) {
+                            actualModelId = 'happyhorse-1.0-video-edit';
+                        } else if (tRefs && tRefs.length >= 2) {
+                            actualModelId = 'happyhorse-1.0-r2v';
+                        } else if (tRefs && tRefs.length === 1) {
+                            actualModelId = 'happyhorse-1.0-i2v';
+                        } else {
+                            actualModelId = 'happyhorse-1.0-t2v';
+                        }
+                    } else {
+                        actualModelId = apiModelId;
+                    }
+                    let sizeStr = '1280*720';
+                    if ((modelDef!.options[tOptIdx] as any).q === '720P') {
+                        if (tRatio === '9:16') sizeStr = '720*1280';
+                        else if (tRatio === '1:1') sizeStr = '720*720';
+                        else if (tRatio === '4:3') sizeStr = '960*720';
+                        else if (tRatio === '3:4') sizeStr = '720*960';
+                        else if (tRatio === '21:9') sizeStr = '1280*544';
+                        else sizeStr = '1280*720';
+                    } else { // 1080P
+                        if (tRatio === '9:16') sizeStr = '1080*1920';
+                        else if (tRatio === '1:1') sizeStr = '1080*1080';
+                        else if (tRatio === '4:3') sizeStr = '1440*1080';
+                        else if (tRatio === '3:4') sizeStr = '1080*1440';
+                        else if (tRatio === '21:9') sizeStr = '1920*816';
+                        else sizeStr = '1920*1080';
+                    }
+
                     const payload: any = {
-                        model: 'happyhorse-1.0',
+                        model: actualModelId,
                         input: {
                             prompt: tPrompt,
                         },
                         parameters: {
-                            size: (modelDef!.options[tOptIdx] as any).q === '720P' ? '1280*720' : '1920*1080',
+                            size: sizeStr,
                             watermark: tHappyHorseWatermark,
                             duration: tHappyHorseDuration
                         }
@@ -3020,7 +3051,7 @@ const App = () => {
                     setGeneratedAssets(prev => prev.map(a => a.id === pId ? updatedAsset : a));
                     saveAssetToDB(updatedAsset);
                     
-                    startVideoPolling(tid, pId, startTime, 'happyhorse-1.0');
+                    startVideoPolling(tid, pId, startTime, actualModelId);
                     return;
                 }
 
