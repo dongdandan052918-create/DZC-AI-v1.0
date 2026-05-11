@@ -2987,45 +2987,37 @@ const App = () => {
                     } else {
                         actualModelId = apiModelId;
                     }
-                    let sizeStr = '1280*720';
-                    if ((modelDef!.options[tOptIdx] as any).q === '720P') {
-                        if (tRatio === '9:16') sizeStr = '720*1280';
-                        else if (tRatio === '1:1') sizeStr = '720*720';
-                        else if (tRatio === '4:3') sizeStr = '960*720';
-                        else if (tRatio === '3:4') sizeStr = '720*960';
-                        else if (tRatio === '21:9') sizeStr = '1280*544';
-                        else sizeStr = '1280*720';
-                    } else { // 1080P
-                        if (tRatio === '9:16') sizeStr = '1080*1920';
-                        else if (tRatio === '1:1') sizeStr = '1080*1080';
-                        else if (tRatio === '4:3') sizeStr = '1440*1080';
-                        else if (tRatio === '3:4') sizeStr = '1080*1440';
-                        else if (tRatio === '21:9') sizeStr = '1920*816';
-                        else sizeStr = '1920*1080';
-                    }
-
                     const payload: any = {
                         model: actualModelId,
                         input: {
                             prompt: tPrompt,
                         },
                         parameters: {
-                            size: sizeStr,
+                            resolution: (modelDef!.options[tOptIdx] as any).q === '720P' ? '720P' : '1080P',
+                            ratio: tRatio,
                             watermark: tHappyHorseWatermark,
                             duration: tHappyHorseDuration
                         }
                     };
 
-                    if (tRefVideos && tRefVideos.length > 0) {
-                        payload.input.video_url = tRefVideos[0].data.startsWith('http') ? tRefVideos[0].data : `data:${tRefVideos[0].mimeType};base64,${tRefVideos[0].data}`;
-                    }
-                    if (tRefs && tRefs.length > 0) {
-                        payload.input.img_url = tRefs[0].data.startsWith('http') ? tRefs[0].data : `data:${tRefs[0].mimeType};base64,${tRefs[0].data}`;
-                        if (tRefs.length > 1) {
+                    if (actualModelId === 'happyhorse-1.0-video-edit') {
+                        if (tRefVideos && tRefVideos.length > 0) {
+                            payload.input.video_url = tRefVideos[0].data.startsWith('http') ? tRefVideos[0].data : `data:${tRefVideos[0].mimeType};base64,${tRefVideos[0].data}`;
+                        }
+                        if (tRefs && tRefs.length > 0) {
                             payload.input.img_urls = tRefs.map((img: any) => img.data.startsWith('http') ? img.data : `data:${img.mimeType};base64,${img.data}`);
                         }
+                    } else if (actualModelId === 'happyhorse-1.0-r2v') {
+                        payload.input.media = tRefs.map((img: any) => ({
+                            type: 'reference_image',
+                            url: img.data.startsWith('http') ? img.data : `data:${img.mimeType};base64,${img.data}`
+                        }));
+                    } else if (actualModelId === 'happyhorse-1.0-i2v') {
+                        if (tRefs && tRefs.length > 0) {
+                            payload.input.img_url = tRefs[0].data.startsWith('http') ? tRefs[0].data : `data:${tRefs[0].mimeType};base64,${tRefs[0].data}`;
+                        }
                     }
-                    
+
                     if (tRefVideos && tRefVideos.length > 0) {
                         payload.parameters.audio_setting = tHappyHorseAudio;
                     }
